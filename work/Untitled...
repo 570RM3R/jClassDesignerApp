@@ -1,0 +1,36 @@
+
+{
+    "pose_object":[
+        {
+            "type":"rectangle",
+            "x_coordinate":380.0,
+            "y_coordinate":201.0,
+            "x_length":179.0,
+            "y_length":107.0,
+            "stroke_width":5.0,
+            "stroke_color":"9acd32ff",
+            "fill_color":"fffff0ff"
+        },
+        {
+            "type":"rectangle",
+            "x_coordinate":117.0,
+            "y_coordinate":123.0,
+            "x_length":159.0,
+            "y_length":171.0,
+            "stroke_width":5.0,
+            "stroke_color":"336633ff",
+            "fill_color":"6680e6ff"
+        },
+        {
+            "type":"ellipse",
+            "x_coordinate":801.0,
+            "y_coordinate":256.0,
+            "x_length":112.0,
+            "y_length":92.0,
+            "stroke_width":16.080402010050253,
+            "stroke_color":"336633ff",
+            "fill_color":"6680e6ff"
+        }
+    ],
+    "background_style":"-fx-background-color: #ffcc80ff;"
+}
