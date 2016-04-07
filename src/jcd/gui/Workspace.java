@@ -6,8 +6,6 @@
 package jcd.gui;
 
 import java.io.IOException;
-import javafx.scene.control.Button;
-import javafx.scene.control.SplitPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
@@ -44,6 +42,17 @@ public class Workspace extends AppWorkspaceComponent {
     // THIS HANDLES INTERACTIONS WITH PAGE EDITING CONTROLS
     PageEditController pageEditController;
     
+    // The pane for editing options
+    VBox rightPane;
+    
+    // THESE ARE HEADINGS
+    Text classNameText;
+    Text packageText;
+    Text parentText;
+    Text variablesText;
+    Text methodsText;
+    
+    
     // HERE ARE OUR DIALOGS
     AppMessageDialogSingleton messageDialog;
     AppYesNoCancelDialogSingleton yesNoCancelDialog;
@@ -64,6 +73,16 @@ public class Workspace extends AppWorkspaceComponent {
 	// KEEP THE GUI FOR LATER
 	gui = app.getGUI();
         
+        rightPane = gui.getRightPane();
+        
+        //FINALIZE THE HEADINGS
+        classNameText = new Text ("Class Name: ");
+        packageText = new Text ("Package");
+        parentText = new Text ("Parent:");
+        variablesText = new Text ("Variables:");
+        methodsText = new Text ("ethods:");
+        
+        
         // THIS WILL PROVIDE US WITH OUR CUSTOM UI SETTINGS AND TEXT
 	PropertiesManager propsSingleton = PropertiesManager.getPropertiesManager();
         
@@ -78,13 +97,13 @@ public class Workspace extends AppWorkspaceComponent {
         
         
         //SET THE RIGHT PANE OF DATA MANAGER
-//        dataManager.setRigthPane(rightPane);
+        dataManager.setRigthPane(rightPane);
         reloadWorkspace();
     }
     
-//    public Pane getRightPane() {
-//        return rightPane;
-//    }
+    public Pane getRightPane() {
+        return rightPane;
+    }
     
     /**
      * This function specifies the CSS style classes for all the UI components

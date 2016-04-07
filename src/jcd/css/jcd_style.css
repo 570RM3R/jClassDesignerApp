@@ -22,17 +22,15 @@ and open the template in the editor.
 // CSS CLASS FOR PAGE EDITING BUTTONS
 .tag_button {
     -fx-background-color: 
-        linear-gradient(#ffd65b, #e68400),
-        linear-gradient(#ffef84, #f2ba44),
-        linear-gradient(#ffea6a, #efaa22),
-        linear-gradient(#ffe657 0%, #f8c202 50%, #eea10b 100%),
-        linear-gradient(from 0% 0% to 15% 50%, rgba(255,255,255,0.9), rgba(255,255,255,0));
+        #3c7fb1,
+        linear-gradient(#fafdfe, #e8f5fc),
+        linear-gradient(#eaf6fd 0%, #d9f0fc 49%, #bee6fd 50%, #a7d9f5 100%);
     -fx-background-radius: 30;
     -fx-background-insets: 0,1,2,3,0;
     -fx-text-fill: #654b00;
     -fx-font-weight: bold;
     -fx-font-size: 14px;
-    -fx-padding: 10 20 10 20;
+    -fx-padding: 8 8 8 8;
 }
 
 // CSS CLASS FOR PANES TO FILL THEIR FULL REGION
@@ -45,7 +43,7 @@ and open the template in the editor.
 
 // CSS CLASS FOR OUR BIG PANES
 .bordered_pane {
-    -fx-background-color: #aaaaff;
+    -fx-background-color: #eae0e0;
     -fx-background-radius: 5.0;
     //-fx-padding: 15;
     -fx-spacing: 10;
@@ -77,5 +75,5 @@ and open the template in the editor.
 }
 
 .render_canvas {
-    -fx-background-color:#ffef84;
+    -fx-background-color:#e0eae1;
 }
