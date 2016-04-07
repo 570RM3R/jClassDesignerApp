@@ -41,8 +41,7 @@ public class DataManager implements AppDataComponent {
      */
     @Override
     public void reset() {
-        rightPane.getChildren().clear();
-        rightPane.setStyle("-fx-background-color:#ffef84;");
+        app.getGUI().getCenterPane().setStyle("-fx-background-color:#e0eae1;");
     }
     
     public void setRigthPane(Pane pane) {

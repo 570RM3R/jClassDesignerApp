@@ -6,6 +6,10 @@
 package jcd.gui;
 
 import java.io.IOException;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
@@ -44,13 +48,16 @@ public class Workspace extends AppWorkspaceComponent {
     
     // The pane for editing options
     VBox rightPane;
+    HBox classPane;
+    HBox packagePane;
+    HBox parentPane;
     
     // THESE ARE HEADINGS
-    Text classNameText;
-    Text packageText;
-    Text parentText;
-    Text variablesText;
-    Text methodsText;
+    Label classNameText;
+    Label packageText;
+    Label parentText;
+    Label variablesText;
+    Label methodsText;
     
     
     // HERE ARE OUR DIALOGS
@@ -74,15 +81,23 @@ public class Workspace extends AppWorkspaceComponent {
 	gui = app.getGUI();
         
         rightPane = gui.getRightPane();
+        classPane = new HBox(5);
+        packagePane = new HBox(5);
+        parentPane = new HBox(5);
         
         //FINALIZE THE HEADINGS
-        classNameText = new Text ("Class Name: ");
-        packageText = new Text ("Package");
-        parentText = new Text ("Parent:");
-        variablesText = new Text ("Variables:");
-        methodsText = new Text ("ethods:");
+        classNameText = new Label ("Class Name: ");
+        packageText = new Label ("Package: ");
+        parentText = new Label ("Parent:");
+        variablesText = new Label ("Variables:");
+        methodsText = new Label ("Methods:");
+        
+        classPane.getChildren().addAll(classNameText, new TextField());
+        packagePane.getChildren().addAll(packageText, new TextField());
+        parentPane.getChildren().addAll(parentText, new ComboBox());
         
         
+        rightPane.getChildren().addAll(classPane, packagePane, parentPane);
         // THIS WILL PROVIDE US WITH OUR CUSTOM UI SETTINGS AND TEXT
 	PropertiesManager propsSingleton = PropertiesManager.getPropertiesManager();
         
@@ -113,7 +128,10 @@ public class Workspace extends AppWorkspaceComponent {
      */
     @Override
     public void initStyle() {
-
+        classNameText.getStyleClass().add(CLASS_HEADING_TEXT);
+        packageText.getStyleClass().add(CLASS_SUB_HEADING_TEXT);
+        parentText.getStyleClass().add(CLASS_SUB_HEADING_TEXT);
+        
     }
 
     /**
@@ -122,10 +140,6 @@ public class Workspace extends AppWorkspaceComponent {
      */
     @Override
     public void reloadWorkspace() {
-//        if (rightPane.getChildren().size() == 0) {
-//            System.out.println("");
-//        }
-//        else System.out.println("");
-//        
+       
     }
 }
