@@ -6,13 +6,19 @@
 package jcd.gui;
 
 import java.io.IOException;
+import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import static javafx.scene.control.TableView.CONSTRAINED_RESIZE_POLICY;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
-import javafx.scene.text.Text;
 import jcd.controller.PageEditController;
 import jcd.data.DataManager;
 import jcd.file.FileManager;
@@ -20,6 +26,7 @@ import properties_manager.PropertiesManager;
 import paf.ui.AppGUI;
 import paf.AppTemplate;
 import paf.components.AppWorkspaceComponent;
+import static paf.settings.AppPropertyType.*;
 import paf.ui.AppMessageDialogSingleton;
 import paf.ui.AppYesNoCancelDialogSingleton;
 
@@ -48,17 +55,29 @@ public class Workspace extends AppWorkspaceComponent {
     
     // The pane for editing options
     VBox rightPane;
-    HBox classPane;
-    HBox packagePane;
-    HBox parentPane;
+    GridPane infoGridPaneOne;
+    GridPane infoGridPaneTwo;
+    
     
     // THESE ARE HEADINGS
-    Label classNameText;
-    Label packageText;
-    Label parentText;
-    Label variablesText;
-    Label methodsText;
+    Label classNameLabel;
+    Label packageLabel;
+    Label parentLabel;
+    Label variablesLabel;
+    Label methodsLabel;
     
+    
+    TextField classNameTextField;
+    TextField packageTextField;
+    ComboBox parentComboBox;
+    
+    Button addVariablesButton;
+    Button removeVariablesButton;
+    Button addMethodsButton;
+    Button removeMethodsButton;
+    
+    TableView variablesTableView;
+    TableView methodsTableView;
     
     // HERE ARE OUR DIALOGS
     AppMessageDialogSingleton messageDialog;
@@ -81,23 +100,59 @@ public class Workspace extends AppWorkspaceComponent {
 	gui = app.getGUI();
         
         rightPane = gui.getRightPane();
-        classPane = new HBox(5);
-        packagePane = new HBox(5);
-        parentPane = new HBox(5);
+        infoGridPaneOne = new GridPane();
+        infoGridPaneOne.setVgap(20);
+        infoGridPaneTwo = new GridPane();
+        infoGridPaneTwo.setVgap(20);
         
         //FINALIZE THE HEADINGS
-        classNameText = new Label ("Class Name: ");
-        packageText = new Label ("Package: ");
-        parentText = new Label ("Parent:");
-        variablesText = new Label ("Variables:");
-        methodsText = new Label ("Methods:");
+        classNameLabel = new Label ("Class Name: ");
+        packageLabel = new Label ("Package: ");
+        parentLabel = new Label ("Parent:");
+        variablesLabel = new Label ("Variables:");
+        methodsLabel = new Label ("Methods:         ");
         
-        classPane.getChildren().addAll(classNameText, new TextField());
-        packagePane.getChildren().addAll(packageText, new TextField());
-        parentPane.getChildren().addAll(parentText, new ComboBox());
+        classNameTextField = new TextField();
+        packageTextField = new TextField();
+        parentComboBox = new ComboBox();
         
+        variablesTableView = new TableView();
+        variablesTableView.setEditable(true);
+        variablesTableView.getColumns().addAll(new TableColumn("Name"), new TableColumn("Type"), new TableColumn("Static"), new TableColumn("Access"));
+        variablesTableView.setColumnResizePolicy(CONSTRAINED_RESIZE_POLICY);
         
-        rightPane.getChildren().addAll(classPane, packagePane, parentPane);
+        methodsTableView = new TableView();
+        methodsTableView.setEditable(true);
+        methodsTableView.getColumns().addAll(new TableColumn("Name"), new TableColumn("Return"), new TableColumn("Static"), new TableColumn("Abstract"), 
+                new TableColumn("Access"), new TableColumn("Arg 1"), new TableColumn("Arg 2"), new TableColumn("Arg 3"));
+        methodsTableView.setColumnResizePolicy(CONSTRAINED_RESIZE_POLICY);
+        
+        infoGridPaneOne.add(classNameLabel, 0, 0);
+        infoGridPaneOne.add(classNameTextField, 1, 0);
+        infoGridPaneOne.add(packageLabel, 0, 1);
+        infoGridPaneOne.add(packageTextField, 1, 1);
+        infoGridPaneOne.add(parentLabel, 0, 2);
+        infoGridPaneOne.add(parentComboBox, 1, 2);
+        infoGridPaneOne.add(variablesLabel, 0, 3);
+        HBox tempHBoxOne = new HBox(15);
+        addVariablesButton = gui.initChildButton(tempHBoxOne, PLUS_ICON.toString(), PLUS_TOOLTIP.toString(), true, false);
+        removeVariablesButton = gui.initChildButton(tempHBoxOne, MINUS_ICON.toString(), MINUS_TOOLTIP.toString(), true, false);
+        infoGridPaneOne.add(tempHBoxOne, 1, 3);
+        ScrollPane tempScrollPaneOne = new ScrollPane(variablesTableView);
+        tempScrollPaneOne.setMaxSize(340, 210);
+        
+        rightPane.getChildren().addAll(infoGridPaneOne, tempScrollPaneOne);
+        
+        HBox tempHBoxTwo = new HBox(15);
+        infoGridPaneTwo.add(methodsLabel, 0, 0);
+        addMethodsButton = gui.initChildButton(tempHBoxTwo, PLUS_ICON.toString(), PLUS_TOOLTIP.toString(), true, false);
+        removeMethodsButton = gui.initChildButton(tempHBoxTwo, MINUS_ICON.toString(), MINUS_TOOLTIP.toString(), true, false);
+        infoGridPaneTwo.add(tempHBoxTwo, 1, 0);
+        ScrollPane tempScrollPaneTwo = new ScrollPane(methodsTableView);
+        tempScrollPaneTwo.setMaxSize(340, 210);
+        
+        rightPane.getChildren().addAll(infoGridPaneTwo, tempScrollPaneTwo);
+        
         // THIS WILL PROVIDE US WITH OUR CUSTOM UI SETTINGS AND TEXT
 	PropertiesManager propsSingleton = PropertiesManager.getPropertiesManager();
         
@@ -128,9 +183,12 @@ public class Workspace extends AppWorkspaceComponent {
      */
     @Override
     public void initStyle() {
-        classNameText.getStyleClass().add(CLASS_HEADING_TEXT);
-        packageText.getStyleClass().add(CLASS_SUB_HEADING_TEXT);
-        parentText.getStyleClass().add(CLASS_SUB_HEADING_TEXT);
+        parentComboBox.getStyleClass().add(CLASS_COMBO_BOX);
+        classNameLabel.getStyleClass().add(CLASS_HEADING_TEXT);
+        packageLabel.getStyleClass().add(CLASS_SUB_HEADING_TEXT);
+        parentLabel.getStyleClass().add(CLASS_SUB_HEADING_TEXT);
+        variablesLabel.getStyleClass().add(CLASS_SUB_HEADING_TEXT);
+        methodsLabel.getStyleClass().add(CLASS_SUB_HEADING_TEXT);
         
     }
 

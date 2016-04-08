@@ -32,6 +32,8 @@
 		<property name="ZOOM_OUT_ICON"					value="ZoomOut.png"></property>
 		<property name="HELP_ICON"						value="Help.png"></property>
 		<property name="INFO_ICON"						value="Info.png"></property>
+		<property name="PLUS_ICON"						value="Plus.png"></property>
+		<property name="MINUS_ICON"						value="Minus.png"></property>
         
         <!-- TOOLTIPS FOR BUTTONS -->
         <property name="NEW_TOOLTIP"					value="Create a New Pose"></property>
