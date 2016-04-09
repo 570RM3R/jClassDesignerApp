@@ -34,12 +34,32 @@
 		<property name="INFO_ICON"						value="Info.png"></property>
 		<property name="PLUS_ICON"						value="Plus.png"></property>
 		<property name="MINUS_ICON"						value="Minus.png"></property>
-        
+
+    
+    
         <!-- TOOLTIPS FOR BUTTONS -->
-        <property name="NEW_TOOLTIP"					value="Create a New Pose"></property>
-        <property name="LOAD_TOOLTIP"					value="Load an Existing Pose"></property>
-        <property name="SAVE_TOOLTIP"					value="Save this Pose"></property>
+        <property name="NEW_TOOLTIP"					value="New jClass Design"></property>
+        <property name="LOAD_TOOLTIP"					value="Load jClass Design"></property>
+        <property name="SAVE_TOOLTIP"					value="Save jClass Design"></property>
+        <property name="SAVE_AS_TOOLTIP"				value="Save As jClass Design"></property>
+        <property name="SAVE_AS_PHOTO_TOOLTIP"			value="Export jClass Design to Photo"></property>
+        <property name="SAVE_AS_CODE_TOOLTIP"			value="Export jClass Design to Code"></property>
         <property name="EXIT_TOOLTIP"					value="Exit the Application"></property>
+        <property name="SELECT_TOOLTIP"					value="Select and Move Class/Interface"></property>
+        <property name="RESIZE_TOOLTIP"					value="Resize Class/Interface"></property>
+        <property name="ADD_CLASS_TOOLTIP"				value="Add Class"></property>
+        <property name="ADD_INTERFACE_TOOLTIP"			value="Add Interface"></property>
+        <property name="REMOVE_ELEMENT_TOOLTIP"			value="Remove Class/Interface"></property>
+        <property name="UNDO_TOOLTIP"					value="Undo"></property>
+        <property name="REDO_TOOLTIP"					value="Redo"></property>
+        <property name="ZOOM_IN_TOOLTIP"				value="Zoom In"></property>
+        <property name="ZOOM_OUT_TOOLTIP"				value="Zoom Out"></property>
+        <property name="HELP_TOOLTIP"					value="Help"></property>
+        <property name="INFO_TOOLTIP"					value="Information"></property>
+        <property name="ADD_VARIABLE_TOOLTIP"			value="Add Variable"></property>
+        <property name="REMOVE_VARIABLE_TOOLTIP"		value="Remove Variable"></property>
+        <property name="ADD_METHOD_TOOLTIP"				value="Add Method"></property>
+        <property name="REMOVE_METHOD_TOOLTIP"			value="Remove Method"></property>
         
         <!-- ERROR MESSAGES -->
         <property name="CLOSE_BUTTON_TEXT"              value="Close"></property>

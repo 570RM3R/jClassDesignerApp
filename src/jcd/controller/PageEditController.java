@@ -11,14 +11,17 @@ import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.SnapshotParameters;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.effect.Bloom;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Ellipse;
+import javafx.scene.shape.Path;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
+import javafx.scene.text.Text;
 import javax.imageio.ImageIO;
 import jcd.gui.Workspace;
 import jcd.jClassDesigner;
@@ -36,9 +39,10 @@ public class PageEditController {
     // HERE'S THE FULL APP, WHICH GIVES US ACCESS TO OTHER STUFF
     jClassDesigner app;
     int index = -1;
-    double xStartingPosition, yStartingPosition, xEndingPosition, yEndingPosition;
+    double xPosition, yPosition, xStartingPosition, yStartingPosition, xEndingPosition, yEndingPosition;
     Rectangle rectangle;
-    Ellipse ellipse;
+    Rectangle nameSection, variableSection, methodSection;
+    Path path;
     boolean drawn = false, dragged = false;
 
     // WE USE THIS TO MAKE SURE OUR PROGRAMMED UPDATES OF UI
@@ -64,218 +68,29 @@ public class PageEditController {
     public void enable(boolean enableSetting) {
 	enabled = enableSetting;
     }
-
-    public void handleSelectionButton() {
+    
+    public void handleAddClassRequest() {
         Workspace workspace = (Workspace) app.getWorkspaceComponent();
         workspace.reloadWorkspace();
-        // TAKE CARE OF THE BUTTONS
-        Pane pane = workspace.getRightPane();
-        pane.setCursor(Cursor.HAND);
-        
-        pane.setOnMousePressed((MouseEvent event) -> {
-            boolean isFound = false;
-            if (index != -1) {
-                Shape object = (Shape)pane.getChildren().get(index);
-                object.setEffect(null);
-            }
-            xStartingPosition = event.getX();
-            yStartingPosition = event.getY();
-            for (int i = pane.getChildren().size()-1; i >= 0; i --) {
-                if (pane.getChildren().get(i).contains(xStartingPosition, yStartingPosition)) {
-                    index = i;
-                    isFound = true;
-                    app.getGUI().updateToolbarControls(false);
-                    break;
-                }
-            }
-            
-            if (index != -1) {
-                Shape object = (Shape)pane.getChildren().get(index);
-                if (!isFound) {
-                    object.setEffect(null);
-                    index = -1;
-                    // TAKE CARE OF THE BUTTONS
-                }
-                else {
-                    object.setEffect(new Bloom());
-                    // TAKE CARE OF THE BUTTONS
-                }
-                
-                // TAKE CARE OF THE BUTTONS
-            }
-        } ) ;
-        
-        pane.setOnMouseDragged((MouseEvent event) -> {
-            if (index != -1) {
-                xEndingPosition = event.getX();
-                yEndingPosition = event.getY();
-                Node object = pane.getChildren().get(index);
-                object.setLayoutX(xEndingPosition - xStartingPosition);
-                object.setLayoutY(yEndingPosition - yStartingPosition);
-                dragged = true;
-            }
-        } ) ;
-
-        pane.setOnMouseReleased((MouseEvent event) -> {
-            if (dragged) {
-                Node object = pane.getChildren().get(index);
-                object.setEffect(null);
-                if (object instanceof Rectangle) {
-                    rectangle = (Rectangle) object;
-                    rectangle.setX(rectangle.getX() + rectangle.getLayoutX());
-                    rectangle.setY(rectangle.getY() + rectangle.getLayoutY());
-                    rectangle.setLayoutX(0);
-                    rectangle.setLayoutY(0);
-                }
-                else if (object instanceof Ellipse) {
-                    ellipse = (Ellipse) object;
-                    ellipse.setCenterX(ellipse.getCenterX() + ellipse.getLayoutX());
-                    ellipse.setCenterY(ellipse.getCenterY() + ellipse.getLayoutY());
-                    ellipse.setLayoutX(0);
-                    ellipse.setLayoutY(0);
-                }
-                // TAKE CARE OF THE BUTTONS
-                index = -1;
-                dragged = false;
-            }
-            workspace.reloadWorkspace();
-        } ) ;
-    }
-
-    public void handleRemoveButton() {
-        Workspace workspace = (Workspace) app.getWorkspaceComponent();
-        Pane pane = workspace.getRightPane();
-        pane.setCursor(Cursor.HAND);
-        if (index != -1) {
-            pane.getChildren().remove(index);
-            app.getGUI().updateToolbarControls(false);
-            // TAKE CARE OF THE BUTTONS
-            index = -1;
-            workspace.reloadWorkspace();
-        }
-    }
-
-    public void handleRectangleButton() {
-        Workspace workspace = (Workspace) app.getWorkspaceComponent();
-        workspace.reloadWorkspace();
-        // TAKE CARE OF THE BUTTONS
-        Pane pane = workspace.getRightPane();
+        Pane pane = app.getGUI().getCenterPane();
         pane.setCursor(Cursor.CROSSHAIR);
-        if (index != -1) {
-            Shape object = (Shape)pane.getChildren().get(index);
-            object.setEffect(null);
-        }
         pane.setOnMousePressed((MouseEvent event) -> {
-            if (drawn == false) {
-                xStartingPosition = event.getX();
-                yStartingPosition = event.getY();
-                rectangle = new Rectangle();
-                // TAKE CARE OF THE BUTTONS
-                pane.getChildren().add(rectangle);
-                workspace.reloadWorkspace();
-                drawn = true ;
-                app.getGUI().updateToolbarControls(false);
-            }
+            nameSection = new Rectangle(200, 40);
+            nameSection.setStroke(Color.BLACK);
+            nameSection.setFill(Color.web("#e0eae1"));
+            nameSection.setX(event.getX() - 100);
+            nameSection.setY(event.getY() - 20);
+            pane.getChildren().add(nameSection);
         } ) ;
+        workspace.reloadWorkspace();
+    }
         
-        pane.setOnMouseDragged((MouseEvent event) -> {
-            if (drawn == true) {
-                xEndingPosition = event.getX();
-                yEndingPosition = event.getY();
-                rectangle.setX(xStartingPosition) ;
-                rectangle.setY(yStartingPosition) ;
-                rectangle.setWidth(xEndingPosition - xStartingPosition) ;
-                rectangle.setHeight(yEndingPosition - yStartingPosition);
-            }
-        } ) ;
-
-        pane.setOnMouseReleased((MouseEvent event) -> {
-            if (drawn == true) {
-                rectangle = null ;
-                drawn = false ;
-            }
-        } ) ;
+    public void handleSaveAsCodeRequest() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
-    public void handleEllipseButton() {
-        Workspace workspace = (Workspace) app.getWorkspaceComponent();
-        workspace.reloadWorkspace();
-        // TAKE CARE OF THE BUTTONS
-        Pane pane = workspace.getRightPane();
-        pane.setCursor(Cursor.CROSSHAIR);
-        if (index != -1) {
-            Shape object = (Shape)pane.getChildren().get(index);
-            object.setEffect(null);
-        }
-        pane.setOnMousePressed((MouseEvent event) -> {
-            if (drawn == false) {
-                xStartingPosition = event.getX();
-                yStartingPosition = event.getY();
-                ellipse = new Ellipse();
-                // TAKE CARE OF THE BUTTONS
-                pane.getChildren().add(ellipse);
-                workspace.reloadWorkspace();
-                drawn = true ;
-                app.getGUI().updateToolbarControls(false);
-            }
-        } ) ;
-        
-        pane.setOnMouseDragged((MouseEvent event) -> {
-            if (drawn == true) {
-                xEndingPosition = event.getX();
-                yEndingPosition = event.getY();
-                ellipse.setCenterX(xStartingPosition);
-                ellipse.setCenterY(yStartingPosition);
-                ellipse.setRadiusX(xEndingPosition - xStartingPosition);
-                ellipse.setRadiusY(yEndingPosition - yStartingPosition);
-            }
-        } ) ;
-
-        pane.setOnMouseReleased((MouseEvent event) -> {
-            if (drawn == true) {
-                ellipse = null ;
-                drawn = false ;
-            }
-        } ) ;
-    }
-
-    public void handleDownButton() {
-        Workspace workspace = (Workspace) app.getWorkspaceComponent();
-        workspace.reloadWorkspace();
-        Pane pane = workspace.getRightPane();
-        if (index != -1) {
-            pane.getChildren().get(index).toBack();
-            app.getGUI().updateToolbarControls(false);
-            // REQUEST FOCUS??
-            index = 0;
-            app.getGUI().updateToolbarControls(false);
-        }
-        workspace.reloadWorkspace();
-    }
-
-    public void handleUpButton() {
-        Workspace workspace = (Workspace) app.getWorkspaceComponent();
-        workspace.reloadWorkspace();
-        Pane pane = workspace.getRightPane();
-        pane.setCursor(Cursor.HAND);
-        if (index != -1) {
-            pane.getChildren().get(index).toFront();
-            app.getGUI().updateToolbarControls(false);
-            // REQUEST FOCUS
-            index = pane.getChildren().size()-1;
-            app.getGUI().updateToolbarControls(false);
-        }
-        workspace.reloadWorkspace();
-    }
-
-    public void handleBackgroundColorPicker(Color color) {
-        Workspace workspace = (Workspace) app.getWorkspaceComponent();
-        workspace.reloadWorkspace();
-        Pane pane = workspace.getRightPane();
-        String colorString = "-fx-background-color: #" + color.toString().substring(2) + ";";
-        pane.setStyle(colorString);
-        workspace.reloadWorkspace();
-        app.getGUI().updateToolbarControls(false);
+    public void handleAddInterfaceRequest() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     public void handleSnapshotButton() {
@@ -302,45 +117,118 @@ public class PageEditController {
         workspace.reloadWorkspace();
     }
 
-    public void handleFillColorPicker(Color color) {
-        Workspace workspace = (Workspace) app.getWorkspaceComponent();
-        workspace.reloadWorkspace();
-        Pane pane = workspace.getRightPane();
-        if (index != -1) {
-            Shape shape = (Shape)pane.getChildren().get(index);
-            shape.setFill(color);
-            app.getGUI().updateToolbarControls(false);
-            // REQUEST FOCUS
-            app.getGUI().updateToolbarControls(false);
-        }
-        workspace.reloadWorkspace();
+    public void handleAddVariablesRequest() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
-    public void handleOutlineColorPicker(Color color) {
-        Workspace workspace = (Workspace) app.getWorkspaceComponent();
-        workspace.reloadWorkspace();
-        Pane pane = workspace.getRightPane();
-        if (index != -1) {
-            Shape shape = (Shape)pane.getChildren().get(index);
-            shape.setStroke(color);
-            app.getGUI().updateToolbarControls(false);
-            // REQUEST FOCUS
-            app.getGUI().updateToolbarControls(false);
-        }
-        workspace.reloadWorkspace();
+    public void handleRemoveVariablesRequest() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
-    public void handleOutlineThiknessSlider(double strokeWidth) {
+    public void handleClassNameUpdateRequest(String name) {
+        Workspace workspace = (Workspace) app.getWorkspaceComponent();
+        TextField x = workspace.getClassNameTextField();
+        
+        Pane pane = app.getGUI().getCenterPane();
+        
+        if (index != -1){
+            Rectangle object = (Rectangle) pane.getChildren().get(index);
+            Text className = new Text(name);
+            className.setX(object.getX() + 5);
+            className.setY(object.getY() + 22);
+            //className.xProperty().bind(object.layoutXProperty());
+            //className.yProperty().bind(object.layoutYProperty());
+            pane.getChildren().add(className);
+
+        }
+    }
+    
+    public void handleSelectRequest() {
+//        Workspace workspace = (Workspace) app.getWorkspaceComponent();
+//        workspace.reloadWorkspace();
+//        workspace.getSelectionButton().setDisable(false);
+//        workspace.getRectangleButton().setDisable(false);
+//        workspace.getEllipseButton().setDisable(false);
+//        workspace.getremoveButton().setDisable(true);
+//        workspace.getDownButton().setDisable(true);
+//        workspace.getUpButton().setDisable(true);
         Workspace workspace = (Workspace) app.getWorkspaceComponent();
         workspace.reloadWorkspace();
-        Pane pane = workspace.getRightPane();
-        if (index != -1) {
-            Shape shape = (Shape)pane.getChildren().get(index);
-            shape.setStrokeWidth(strokeWidth);
-            app.getGUI().updateToolbarControls(false);
-            // REQUEST FOCUS
-            app.getGUI().updateToolbarControls(false);
-        }
-        workspace.reloadWorkspace();
+        Pane pane = app.getGUI().getCenterPane();
+        pane.setCursor(Cursor.HAND);
+        
+        pane.setOnMousePressed((MouseEvent event) -> {
+            boolean isFound = false;
+            if (index != -1) {
+                Shape object = (Shape)pane.getChildren().get(index);
+                object.setEffect(null);
+            }
+            xStartingPosition = event.getX();
+            yStartingPosition = event.getY();
+            for (int i = pane.getChildren().size()-1; i >= 0; i --) {
+                if (pane.getChildren().get(i).contains(xStartingPosition, yStartingPosition)) {
+                    index = i;
+                    isFound = true;
+                    app.getGUI().updateToolbarControls(false);
+                    break;
+                }
+            }
+            
+            if (index != -1) {
+                Shape object = (Shape)pane.getChildren().get(index);
+                if (!isFound) {
+                    object.setEffect(null);
+                    index = -1;
+//                    workspace.getremoveButton().setDisable(true);
+//                    workspace.getDownButton().setDisable(true);
+//                    workspace.getUpButton().setDisable(true);
+                }
+                else {
+                    object.setEffect(new Bloom());
+//                    workspace.getremoveButton().setDisable(false);
+//                    workspace.getDownButton().setDisable(false);
+//                    workspace.getUpButton().setDisable(false);
+                }
+                
+//                workspace.getFillColorPicker().setValue((Color)object.getFill());
+//                workspace.getOutlineColorPicker().setValue((Color)object.getStroke());
+//                workspace.getOutlineThiknessSlider().setValue(object.getStrokeWidth());
+            }
+        } ) ;
+        
+        pane.setOnMouseDragged((MouseEvent event) -> {
+            if (index != -1) {
+                xEndingPosition = event.getX();
+                yEndingPosition = event.getY();
+                Node object = pane.getChildren().get(index);
+                object.setLayoutX(xEndingPosition - xStartingPosition);
+                object.setLayoutY(yEndingPosition - yStartingPosition);
+                dragged = true;
+            }
+        } ) ;
+
+        pane.setOnMouseReleased((MouseEvent event) -> {
+            if (dragged) {
+                Node object = pane.getChildren().get(index);
+                object.setEffect(null);
+                if (object instanceof Rectangle) {
+                    rectangle = (Rectangle) object;
+                    rectangle.setX(rectangle.getX() + rectangle.getLayoutX());
+                    rectangle.setY(rectangle.getY() + rectangle.getLayoutY());
+                    rectangle.setLayoutX(0);
+                    rectangle.setLayoutY(0);
+                }
+//                workspace.getremoveButton().setDisable(true);
+//                workspace.getDownButton().setDisable(true);
+//                workspace.getUpButton().setDisable(true);
+                index = -1;
+                dragged = false;
+            }
+//            workspace.reloadWorkspace();
+        } ) ;
+    }
+
+    public void handleResizeRequest() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }

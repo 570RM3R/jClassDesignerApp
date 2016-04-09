@@ -41,6 +41,8 @@ and open the template in the editor.
     -fx-background-color: #eae0e0;
     -fx-spacing: 20;
     -fx-border-color: #7777dd;
+    -fx-border-style: dotted;
+    -fx-effect: dropshadow(three-pass-box, Aquamarine, 10, 0, 0, 0);
 }
 
 // CSS CLASS FOR LABELS HEADING LARGE SECTIONS IN THE GUI
@@ -67,7 +69,7 @@ and open the template in the editor.
 }
 
 .render_canvas {
-    -fx-background-color:#e0eae1;
+    -fx-background-color: #e0eae1;
 }
 
 .combo_box {

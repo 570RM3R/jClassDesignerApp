@@ -14,7 +14,6 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import static javafx.scene.control.TableView.CONSTRAINED_RESIZE_POLICY;
 import javafx.scene.control.TextField;
-import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
@@ -22,6 +21,7 @@ import javafx.scene.layout.VBox;
 import jcd.controller.PageEditController;
 import jcd.data.DataManager;
 import jcd.file.FileManager;
+import jcd.jClassDesigner;
 import properties_manager.PropertiesManager;
 import paf.ui.AppGUI;
 import paf.AppTemplate;
@@ -71,6 +71,11 @@ public class Workspace extends AppWorkspaceComponent {
     TextField packageTextField;
     ComboBox parentComboBox;
     
+    Button saveAsCodeButton;
+    Button addClassButton;
+    Button selectButton;
+    Button resizeButton;
+    Button addInterfaceButton;
     Button addVariablesButton;
     Button removeVariablesButton;
     Button addMethodsButton;
@@ -99,6 +104,14 @@ public class Workspace extends AppWorkspaceComponent {
 	// KEEP THE GUI FOR LATER
 	gui = app.getGUI();
         
+        // THIS WILL MANAGE ALL EDITING EVENTS
+	pageEditController = new PageEditController((jClassDesigner) app);
+        
+        saveAsCodeButton = gui.initChildButton(gui.getFileToolbarPane(), SAVE_AS_CODE_ICON.toString(), SAVE_AS_CODE_TOOLTIP.toString(), false);
+        selectButton = gui.initChildButton(gui.getEditToolbarPane(), SELECT_ICON.toString(), SELECT_TOOLTIP.toString(), false);
+        resizeButton = gui.initChildButton(gui.getEditToolbarPane(), RESIZE_ICON.toString(), RESIZE_TOOLTIP.toString(), false);
+        addClassButton = gui.initChildButton(gui.getEditToolbarPane(), ADD_CLASS_ICON.toString(), ADD_CLASS_TOOLTIP.toString(), false);
+        addInterfaceButton = gui.initChildButton(gui.getEditToolbarPane(), ADD_INTERFACE_ICON.toString(), ADD_INTERFACE_TOOLTIP.toString(), false);
         rightPane = gui.getRightPane();
         infoGridPaneOne = new GridPane();
         infoGridPaneOne.setVgap(20);
@@ -135,8 +148,9 @@ public class Workspace extends AppWorkspaceComponent {
         infoGridPaneOne.add(parentComboBox, 1, 2);
         infoGridPaneOne.add(variablesLabel, 0, 3);
         HBox tempHBoxOne = new HBox(15);
-        addVariablesButton = gui.initChildButton(tempHBoxOne, PLUS_ICON.toString(), PLUS_TOOLTIP.toString(), true, false);
-        removeVariablesButton = gui.initChildButton(tempHBoxOne, MINUS_ICON.toString(), MINUS_TOOLTIP.toString(), true, false);
+        addVariablesButton = gui.initChildButton(tempHBoxOne, PLUS_ICON.toString(), ADD_VARIABLE_TOOLTIP.toString(), false);
+        removeVariablesButton = gui.initChildButton(tempHBoxOne, MINUS_ICON.toString(), REMOVE_VARIABLE_TOOLTIP.toString(), false);
+        
         infoGridPaneOne.add(tempHBoxOne, 1, 3);
         ScrollPane tempScrollPaneOne = new ScrollPane(variablesTableView);
         tempScrollPaneOne.setMaxSize(340, 210);
@@ -145,13 +159,38 @@ public class Workspace extends AppWorkspaceComponent {
         
         HBox tempHBoxTwo = new HBox(15);
         infoGridPaneTwo.add(methodsLabel, 0, 0);
-        addMethodsButton = gui.initChildButton(tempHBoxTwo, PLUS_ICON.toString(), PLUS_TOOLTIP.toString(), true, false);
-        removeMethodsButton = gui.initChildButton(tempHBoxTwo, MINUS_ICON.toString(), MINUS_TOOLTIP.toString(), true, false);
+        addMethodsButton = gui.initChildButton(tempHBoxTwo, PLUS_ICON.toString(), ADD_METHOD_TOOLTIP.toString(), false);
+        removeMethodsButton = gui.initChildButton(tempHBoxTwo, MINUS_ICON.toString(), REMOVE_METHOD_TOOLTIP.toString(), false);
         infoGridPaneTwo.add(tempHBoxTwo, 1, 0);
         ScrollPane tempScrollPaneTwo = new ScrollPane(methodsTableView);
         tempScrollPaneTwo.setMaxSize(340, 210);
         
         rightPane.getChildren().addAll(infoGridPaneTwo, tempScrollPaneTwo);
+
+        saveAsCodeButton.setOnAction(e -> {
+            pageEditController.handleSaveAsCodeRequest();
+        });
+        selectButton.setOnAction(e -> {
+            pageEditController.handleSelectRequest();
+        });
+        resizeButton.setOnAction(e -> {
+            pageEditController.handleResizeRequest();
+        });
+        addClassButton.setOnAction(e -> {
+            pageEditController.handleAddClassRequest();
+        });
+        addInterfaceButton.setOnAction(e -> {
+            pageEditController.handleAddInterfaceRequest();
+        });
+        addVariablesButton.setOnAction(e -> {
+            pageEditController.handleAddVariablesRequest();
+        });
+        removeVariablesButton.setOnAction(e -> {
+            pageEditController.handleRemoveVariablesRequest();
+        });
+        classNameTextField.setOnKeyTyped(e -> {
+            pageEditController.handleClassNameUpdateRequest(classNameTextField.getText());
+        });
         
         // THIS WILL PROVIDE US WITH OUR CUSTOM UI SETTINGS AND TEXT
 	PropertiesManager propsSingleton = PropertiesManager.getPropertiesManager();
@@ -169,10 +208,15 @@ public class Workspace extends AppWorkspaceComponent {
         //SET THE RIGHT PANE OF DATA MANAGER
         dataManager.setRigthPane(rightPane);
         reloadWorkspace();
+        
     }
     
     public Pane getRightPane() {
         return rightPane;
+    }
+    
+    public TextField getClassNameTextField() {
+        return classNameTextField;
     }
     
     /**
