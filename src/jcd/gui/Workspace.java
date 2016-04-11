@@ -188,8 +188,17 @@ public class Workspace extends AppWorkspaceComponent {
         removeVariablesButton.setOnAction(e -> {
             pageEditController.handleRemoveVariablesRequest();
         });
-        classNameTextField.setOnKeyTyped(e -> {
+        addMethodsButton.setOnAction(e -> {
+            pageEditController.handleAddMethodsRequest();
+        });
+        removeMethodsButton.setOnAction(e -> {
+            pageEditController.handleRemoveMethodsRequest();
+        });
+        classNameTextField.setOnKeyReleased(e -> {
             pageEditController.handleClassNameUpdateRequest(classNameTextField.getText());
+        });
+        packageTextField.setOnKeyReleased(e -> {
+            pageEditController.handlePackageNameUpdateRequest(packageTextField.getText());
         });
         
         // THIS WILL PROVIDE US WITH OUR CUSTOM UI SETTINGS AND TEXT
