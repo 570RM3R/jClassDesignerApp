@@ -49,7 +49,7 @@
         <property name="RESIZE_TOOLTIP"					value="Resize Class/Interface"></property>
         <property name="ADD_CLASS_TOOLTIP"				value="Add Class"></property>
         <property name="ADD_INTERFACE_TOOLTIP"			value="Add Interface"></property>
-        <property name="REMOVE_ELEMENT_TOOLTIP"			value="Remove Class/Interface"></property>
+        <property name="REMOVE_DIAGRAM_TOOLTIP"			value="Remove Class/Interface"></property>
         <property name="UNDO_TOOLTIP"					value="Undo"></property>
         <property name="REDO_TOOLTIP"					value="Redo"></property>
         <property name="ZOOM_IN_TOOLTIP"				value="Zoom In"></property>

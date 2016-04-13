@@ -6,10 +6,13 @@
 package jcd.gui;
 
 import java.io.IOException;
+import static javafx.geometry.Orientation.VERTICAL;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Separator;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import static javafx.scene.control.TableView.CONSTRAINED_RESIZE_POLICY;
@@ -18,6 +21,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
+import jcd.Diagram;
 import jcd.controller.PageEditController;
 import jcd.data.DataManager;
 import jcd.file.FileManager;
@@ -60,14 +64,14 @@ public class Workspace extends AppWorkspaceComponent {
     
     
     // THESE ARE HEADINGS
-    Label classNameLabel;
+    Label nameLabel;
     Label packageLabel;
     Label parentLabel;
     Label variablesLabel;
     Label methodsLabel;
     
     
-    TextField classNameTextField;
+    TextField nameTextField;
     TextField packageTextField;
     ComboBox parentComboBox;
     
@@ -80,6 +84,17 @@ public class Workspace extends AppWorkspaceComponent {
     Button removeVariablesButton;
     Button addMethodsButton;
     Button removeMethodsButton;
+    Button saveAsPhotoButton;
+    Button exitButton;
+    Button removeDiagramButton;
+    Button undoButton;
+    Button redoButton;
+    Button zoomInButton;
+    Button zoomOutButton;
+    CheckBox gridCheckBox;
+    CheckBox snapCheckBox;
+    Button helpButton;
+    Button infoButton;
     
     TableView variablesTableView;
     TableView methodsTableView;
@@ -107,11 +122,25 @@ public class Workspace extends AppWorkspaceComponent {
         // THIS WILL MANAGE ALL EDITING EVENTS
 	pageEditController = new PageEditController((jClassDesigner) app);
         
-        saveAsCodeButton = gui.initChildButton(gui.getFileToolbarPane(), SAVE_AS_CODE_ICON.toString(), SAVE_AS_CODE_TOOLTIP.toString(), false);
-        selectButton = gui.initChildButton(gui.getEditToolbarPane(), SELECT_ICON.toString(), SELECT_TOOLTIP.toString(), false);
-        resizeButton = gui.initChildButton(gui.getEditToolbarPane(), RESIZE_ICON.toString(), RESIZE_TOOLTIP.toString(), false);
-        addClassButton = gui.initChildButton(gui.getEditToolbarPane(), ADD_CLASS_ICON.toString(), ADD_CLASS_TOOLTIP.toString(), false);
-        addInterfaceButton = gui.initChildButton(gui.getEditToolbarPane(), ADD_INTERFACE_ICON.toString(), ADD_INTERFACE_TOOLTIP.toString(), false);
+        saveAsPhotoButton = gui.initChildButton(gui.getToolbarPane(), SAVE_AS_PHOTO_ICON.toString(), SAVE_AS_PHOTO_TOOLTIP.toString(), false);
+        saveAsCodeButton = gui.initChildButton(gui.getToolbarPane(), SAVE_AS_CODE_ICON.toString(), SAVE_AS_CODE_TOOLTIP.toString(), false);
+        exitButton = gui.initChildButton(gui.getToolbarPane(), EXIT_ICON.toString(), EXIT_TOOLTIP.toString(), false);
+        gui.getToolbarPane().getChildren().add(new Separator(VERTICAL));
+        selectButton = gui.initChildButton(gui.getToolbarPane(), SELECT_ICON.toString(), SELECT_TOOLTIP.toString(), false);
+        resizeButton = gui.initChildButton(gui.getToolbarPane(), RESIZE_ICON.toString(), RESIZE_TOOLTIP.toString(), false);
+        addClassButton = gui.initChildButton(gui.getToolbarPane(), ADD_CLASS_ICON.toString(), ADD_CLASS_TOOLTIP.toString(), false);
+        addInterfaceButton = gui.initChildButton(gui.getToolbarPane(), ADD_INTERFACE_ICON.toString(), ADD_INTERFACE_TOOLTIP.toString(), false);
+        removeDiagramButton = gui.initChildButton(gui.getToolbarPane(), REMOVE_ICON.toString(), REMOVE_DIAGRAM_TOOLTIP.toString(), false);
+        undoButton = gui.initChildButton(gui.getToolbarPane(), UNDO_ICON.toString(), UNDO_TOOLTIP.toString(), false);
+        redoButton = gui.initChildButton(gui.getToolbarPane(), REDO_ICON.toString(), REDO_TOOLTIP.toString(), false);
+        gui.getToolbarPane().getChildren().add(new Separator(VERTICAL));
+        zoomInButton = gui.initChildButton(gui.getToolbarPane(), ZOOM_IN_ICON.toString(), ZOOM_IN_TOOLTIP.toString(), false);
+        zoomOutButton = gui.initChildButton(gui.getToolbarPane(), ZOOM_OUT_ICON.toString(), ZOOM_OUT_TOOLTIP.toString(), false);
+        gridCheckBox = new CheckBox("Grid");
+        snapCheckBox = new CheckBox("Snap");
+        gui.getToolbarPane().getChildren().addAll(gridCheckBox, snapCheckBox, new Separator(VERTICAL));
+        helpButton = gui.initChildButton(gui.getToolbarPane(), HELP_ICON.toString(), HELP_TOOLTIP.toString(), false);
+        infoButton = gui.initChildButton(gui.getToolbarPane(), INFO_ICON.toString(), INFO_TOOLTIP.toString(), false);
         rightPane = gui.getRightPane();
         infoGridPaneOne = new GridPane();
         infoGridPaneOne.setVgap(20);
@@ -119,13 +148,13 @@ public class Workspace extends AppWorkspaceComponent {
         infoGridPaneTwo.setVgap(20);
         
         //FINALIZE THE HEADINGS
-        classNameLabel = new Label ("Class Name: ");
+        nameLabel = new Label ("Name: ");
         packageLabel = new Label ("Package: ");
         parentLabel = new Label ("Parent:");
-        variablesLabel = new Label ("Variables:");
+        variablesLabel = new Label ("Variables:         ");
         methodsLabel = new Label ("Methods:         ");
         
-        classNameTextField = new TextField();
+        nameTextField = new TextField();
         packageTextField = new TextField();
         parentComboBox = new ComboBox();
         
@@ -140,8 +169,8 @@ public class Workspace extends AppWorkspaceComponent {
                 new TableColumn("Access"), new TableColumn("Arg 1"), new TableColumn("Arg 2"), new TableColumn("Arg 3"));
         methodsTableView.setColumnResizePolicy(CONSTRAINED_RESIZE_POLICY);
         
-        infoGridPaneOne.add(classNameLabel, 0, 0);
-        infoGridPaneOne.add(classNameTextField, 1, 0);
+        infoGridPaneOne.add(nameLabel, 0, 0);
+        infoGridPaneOne.add(nameTextField, 1, 0);
         infoGridPaneOne.add(packageLabel, 0, 1);
         infoGridPaneOne.add(packageTextField, 1, 1);
         infoGridPaneOne.add(parentLabel, 0, 2);
@@ -166,9 +195,15 @@ public class Workspace extends AppWorkspaceComponent {
         tempScrollPaneTwo.setMaxSize(340, 210);
         
         rightPane.getChildren().addAll(infoGridPaneTwo, tempScrollPaneTwo);
-
+        
+        saveAsPhotoButton.setOnAction(e -> {
+            pageEditController.handleSaveAsPhotoRequest();
+        });
         saveAsCodeButton.setOnAction(e -> {
             pageEditController.handleSaveAsCodeRequest();
+        });
+        exitButton.setOnAction(e -> {
+            gui.getFileController().handleExitRequest();
         });
         selectButton.setOnAction(e -> {
             pageEditController.handleSelectRequest();
@@ -182,6 +217,37 @@ public class Workspace extends AppWorkspaceComponent {
         addInterfaceButton.setOnAction(e -> {
             pageEditController.handleAddInterfaceRequest();
         });
+        removeDiagramButton.setOnAction(e -> {
+            pageEditController.handleRemoveDiagramRequest();
+        });
+        undoButton.setOnAction(e -> {
+            pageEditController.handleUndoRequest();
+        });
+        redoButton.setOnAction(e -> {
+            pageEditController.handleRedoRequest();
+        });
+        zoomInButton.setOnAction(e -> {
+            pageEditController.handleZoomInRequest();
+        });
+        zoomOutButton.setOnAction(e -> {
+            pageEditController.handleZoomOutRequest();
+        });
+        helpButton.setOnAction(e -> {
+            pageEditController.handleHelpRequest();
+        });
+        infoButton.setOnAction(e -> {
+            pageEditController.handleInfoRequest();
+        });
+        nameTextField.setOnKeyReleased(e -> {
+            pageEditController.handleNameUpdateRequest(nameTextField.getText());
+        });
+        packageTextField.setOnKeyReleased(e -> {
+            pageEditController.handlePackageNameUpdateRequest(packageTextField.getText());
+        });
+        parentComboBox.setOnAction(e -> {
+            if(parentComboBox.getValue() != null)
+                pageEditController.handleParentComboBoxUpdateRequest(parentComboBox.getValue().toString());
+        });
         addVariablesButton.setOnAction(e -> {
             pageEditController.handleAddVariablesRequest();
         });
@@ -194,13 +260,6 @@ public class Workspace extends AppWorkspaceComponent {
         removeMethodsButton.setOnAction(e -> {
             pageEditController.handleRemoveMethodsRequest();
         });
-        classNameTextField.setOnKeyReleased(e -> {
-            pageEditController.handleClassNameUpdateRequest(classNameTextField.getText());
-        });
-        packageTextField.setOnKeyReleased(e -> {
-            pageEditController.handlePackageNameUpdateRequest(packageTextField.getText());
-        });
-        
         // THIS WILL PROVIDE US WITH OUR CUSTOM UI SETTINGS AND TEXT
 	PropertiesManager propsSingleton = PropertiesManager.getPropertiesManager();
         
@@ -224,8 +283,16 @@ public class Workspace extends AppWorkspaceComponent {
         return rightPane;
     }
     
-    public TextField getClassNameTextField() {
-        return classNameTextField;
+    public TextField getNameTextField() {
+        return nameTextField;
+    }
+    
+    public TextField getPackageTextField() {
+        return packageTextField;
+    }
+    
+    public ComboBox getParentComboBox() {
+        return parentComboBox;
     }
     
     /**
@@ -237,7 +304,7 @@ public class Workspace extends AppWorkspaceComponent {
     @Override
     public void initStyle() {
         parentComboBox.getStyleClass().add(CLASS_COMBO_BOX);
-        classNameLabel.getStyleClass().add(CLASS_HEADING_TEXT);
+        nameLabel.getStyleClass().add(CLASS_HEADING_TEXT);
         packageLabel.getStyleClass().add(CLASS_SUB_HEADING_TEXT);
         parentLabel.getStyleClass().add(CLASS_SUB_HEADING_TEXT);
         variablesLabel.getStyleClass().add(CLASS_SUB_HEADING_TEXT);
@@ -251,6 +318,12 @@ public class Workspace extends AppWorkspaceComponent {
      */
     @Override
     public void reloadWorkspace() {
-       
+        if(!app.getGUI().getCenterPane().getChildren().isEmpty()) {
+            parentComboBox.getItems().clear();
+            for(int i = 0; i < app.getGUI().getCenterPane().getChildren().size(); i++) {
+                Diagram diagram = (Diagram)app.getGUI().getCenterPane().getChildren().get(i);
+                parentComboBox.getItems().add(diagram.getNameText().getText());
+            }
+        }
     }
 }

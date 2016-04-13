@@ -14,6 +14,7 @@ import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Text;
 import javax.imageio.ImageIO;
 import jcd.Diagram;
 import jcd.gui.Workspace;
@@ -88,8 +89,16 @@ public class PageEditController {
         workspace.reloadWorkspace();
         
     }
-
-    public void handleSnapshotButton() {
+    
+    public void handleRemoveDiagramRequest() {
+        Pane pane = app.getGUI().getCenterPane();
+        if(index != -1) {
+            pane.getChildren().remove(index);
+            index = -1;
+        }
+    }
+    
+    public void handleSaveAsPhotoRequest() {
         Workspace workspace = (Workspace) app.getWorkspaceComponent();
         PropertiesManager props = PropertiesManager.getPropertiesManager();
         workspace.reloadWorkspace();
@@ -122,14 +131,18 @@ public class PageEditController {
     }
 
     public void handleRemoveVariablesRequest() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        
     }
 
-    public void handleClassNameUpdateRequest(String name) {
+    public void handleNameUpdateRequest(String name) {
         Pane pane = app.getGUI().getCenterPane();
-        if (index != -1){
+        if(index != -1){
             diagram = (Diagram)pane.getChildren().get(index);
             diagram.getNameText().setText(name);
+            double newWidth = new Text(name).getLayoutBounds().getWidth();
+            if(diagram.getNameSection().getWidth() - 12 <= new Text(name).getLayoutBounds().getWidth()) {
+                diagram.getNameSection().setWidth(newWidth + 12);
+            }
         }
     }
     
@@ -163,7 +176,7 @@ public class PageEditController {
                 if (pane.getChildren().get(i).contains(xStartingPosition, yStartingPosition)) {
                     index = i;
                     isFound = true;
-                    app.getGUI().updateToolbarControls(false);
+                    //app.getGUI().updateToolbarControls(false);
                     break;
                 }
             }
@@ -177,6 +190,9 @@ public class PageEditController {
                     if(diagram.getMethodSection() != null)
                         diagram.getMethodSection().setStroke(Color.BLACK);
                     index = -1;
+                    workspace.getNameTextField().setText("");
+                    workspace.getPackageTextField().setText("");
+                    workspace.getParentComboBox().setValue("");
 //                    workspace.getremoveButton().setDisable(true);
 //                    workspace.getDownButton().setDisable(true);
 //                    workspace.getUpButton().setDisable(true);
@@ -187,6 +203,9 @@ public class PageEditController {
                         diagram.getVariableSection().setStroke(Color.BLUE);
                     if(diagram.getMethodSection() != null)
                         diagram.getMethodSection().setStroke(Color.BLUE);
+                    workspace.getNameTextField().setText(diagram.getNameText().getText());
+                    workspace.getPackageTextField().setText(diagram.getPackageText());
+                    workspace.getParentComboBox().setValue(diagram.getParentName());
 //                    workspace.getremoveButton().setDisable(false);
 //                    workspace.getDownButton().setDisable(false);
 //                    workspace.getUpButton().setDisable(false);
@@ -207,6 +226,10 @@ public class PageEditController {
                 diagram.getNameSection().setLayoutY(yEndingPosition - yStartingPosition);
                 diagram.getNameText().setLayoutX(xEndingPosition - xStartingPosition);
                 diagram.getNameText().setLayoutY(yEndingPosition - yStartingPosition);
+                if(diagram.isInterface()) {
+                    diagram.getInterfaceText().setLayoutX(xEndingPosition - xStartingPosition);
+                    diagram.getInterfaceText().setLayoutY(yEndingPosition - yStartingPosition);
+                }               
                 if(diagram.getVariableSection() != null) {
                     diagram.getVariableSection().setLayoutX(xEndingPosition - xStartingPosition);
                     diagram.getVariableSection().setLayoutY(yEndingPosition - yStartingPosition);
@@ -239,6 +262,12 @@ public class PageEditController {
                 diagram.getNameSection().setLayoutY(0);
                 diagram.getNameText().setLayoutX(0);
                 diagram.getNameText().setLayoutY(0);
+                if(diagram.isInterface()) {
+                    diagram.getInterfaceText().setX(diagram.getInterfaceText().getX() + diagram.getInterfaceText().getLayoutX());
+                    diagram.getInterfaceText().setY(diagram.getInterfaceText().getY() + diagram.getInterfaceText().getLayoutY());
+                    diagram.getInterfaceText().setLayoutX(0);
+                    diagram.getInterfaceText().setLayoutY(0);
+                }  
                 if(diagram.getVariableSection() != null) {
                     diagram.getVariableSection().setX(diagram.getVariableSection().getX() + diagram.getVariableSection().getLayoutX());
                     diagram.getVariableSection().setY(diagram.getVariableSection().getY() + diagram.getVariableSection().getLayoutY());
@@ -265,7 +294,7 @@ public class PageEditController {
                 index = -1;
                 dragged = false;
             }
-//            workspace.reloadWorkspace();
+            workspace.reloadWorkspace();
         } ) ;
     }
 
@@ -291,5 +320,38 @@ public class PageEditController {
 
     public void handleRemoveMethodsRequest() {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    public void handleUndoRequest() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    public void handleRedoRequest() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    public void handleZoomInRequest() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    public void handleZoomOutRequest() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    public void handleHelpRequest() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    public void handleInfoRequest() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    public void handleParentComboBoxUpdateRequest(String parentName) {
+        Pane pane = app.getGUI().getCenterPane();
+        if (index != -1){
+            diagram = (Diagram)pane.getChildren().get(index);
+            diagram.setParentName(parentName);
+            //diagram.setParentId(index);
+        }
     }
 }
