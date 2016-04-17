@@ -14,7 +14,7 @@ import javafx.collections.ObservableList;
  */
 public class Variable {
     String methodName;
-    final ObservableList<String> typeOption = FXCollections.observableArrayList("int", "double", "String");
+    String typeName;
     boolean isStatic;
-    final ObservableList<String> accessOption = FXCollections.observableArrayList("private", "public");
+    final ObservableList<String> accessOption = FXCollections.observableArrayList("public", "protected", "<no modifier>", "private");
 }

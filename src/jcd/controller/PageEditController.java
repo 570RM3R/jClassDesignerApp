@@ -10,6 +10,7 @@ import java.io.IOException;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.Cursor;
 import javafx.scene.SnapshotParameters;
+import javafx.scene.control.TableColumn;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
@@ -64,7 +65,7 @@ public class PageEditController {
     public void handleAddClassRequest() {
         Workspace workspace = (Workspace) app.getWorkspaceComponent();
         workspace.reloadWorkspace();
-        Pane pane = app.getGUI().getCenterPane();
+        Pane pane = workspace.getLeftPane();
         pane.setCursor(Cursor.CROSSHAIR);
         pane.setOnMousePressed((MouseEvent event) -> {
             diagram = new Diagram(event.getX(), event.getY(), false);
@@ -80,7 +81,7 @@ public class PageEditController {
     public void handleAddInterfaceRequest() {
         Workspace workspace = (Workspace) app.getWorkspaceComponent();
         workspace.reloadWorkspace();
-        Pane pane = app.getGUI().getCenterPane();
+        Pane pane = workspace.getLeftPane();
         pane.setCursor(Cursor.CROSSHAIR);
         pane.setOnMousePressed((MouseEvent event) -> {
             diagram = new Diagram(event.getX(), event.getY(), true);
@@ -91,18 +92,23 @@ public class PageEditController {
     }
     
     public void handleRemoveDiagramRequest() {
-        Pane pane = app.getGUI().getCenterPane();
+        Workspace workspace = (Workspace) app.getWorkspaceComponent();
+        Pane pane = workspace.getLeftPane();
         if(index != -1) {
             pane.getChildren().remove(index);
             index = -1;
+            workspace.getNameTextField().setText("");
+            workspace.getPackageTextField().setText("");
+            workspace.getParentComboBox().setValue("");
         }
+        workspace.reloadWorkspace();
     }
     
     public void handleSaveAsPhotoRequest() {
         Workspace workspace = (Workspace) app.getWorkspaceComponent();
         PropertiesManager props = PropertiesManager.getPropertiesManager();
         workspace.reloadWorkspace();
-        Pane pane = workspace.getRightPane();
+        Pane pane = workspace.getLeftPane();
         if (index != -1) {
             diagram = (Diagram)pane.getChildren().get(index);
             diagram.getMethodSection().setStroke(Color.BLACK);
@@ -123,7 +129,8 @@ public class PageEditController {
     }
 
     public void handleAddVariablesRequest() {
-        Pane pane = app.getGUI().getCenterPane();
+        Workspace workspace = (Workspace) app.getWorkspaceComponent();
+        Pane pane = workspace.getLeftPane();
         if (index != -1){
             diagram = (Diagram)pane.getChildren().get(index);
             diagram.addVariable();
@@ -135,14 +142,21 @@ public class PageEditController {
     }
 
     public void handleNameUpdateRequest(String name) {
-        Pane pane = app.getGUI().getCenterPane();
+        Workspace workspace = (Workspace) app.getWorkspaceComponent();
+        Pane pane = workspace.getLeftPane();
         if(index != -1){
             diagram = (Diagram)pane.getChildren().get(index);
             diagram.getNameText().setText(name);
             double newWidth = new Text(name).getLayoutBounds().getWidth();
+            // Resize the diagram dynamically
             if(diagram.getNameSection().getWidth() - 12 <= new Text(name).getLayoutBounds().getWidth()) {
                 diagram.getNameSection().setWidth(newWidth + 12);
+                if(diagram.getVariableSection() != null)
+                    diagram.getVariableSection().setWidth(newWidth + 12);
+                if(diagram.getMethodSection() != null)
+                    diagram.getMethodSection().setWidth(newWidth + 12);
             }
+            workspace.reloadWorkspace();
         }
     }
     
@@ -157,11 +171,11 @@ public class PageEditController {
 //        workspace.getUpButton().setDisable(true);
         Workspace workspace = (Workspace) app.getWorkspaceComponent();
         workspace.reloadWorkspace();
-        Pane pane = app.getGUI().getCenterPane();
+        Pane pane = workspace.getLeftPane();
         pane.setCursor(Cursor.HAND);
         
         pane.setOnMousePressed((MouseEvent event) -> {
-            boolean isFound = false;
+            // Unselect previously selected item and set the index -1
             if (index != -1) {
                 diagram = (Diagram)pane.getChildren().get(index);
                 diagram.getNameSection().setStroke(Color.BLACK);
@@ -169,13 +183,17 @@ public class PageEditController {
                     diagram.getVariableSection().setStroke(Color.BLACK);
                 if(diagram.getMethodSection() != null)
                     diagram.getMethodSection().setStroke(Color.BLACK);
+                workspace.getNameTextField().setText("");
+                workspace.getPackageTextField().setText("");
+                workspace.getParentComboBox().setValue("");
+                index = -1;
             }
+            // Search whether any item lies in the clicked region
             xStartingPosition = event.getX();
             yStartingPosition = event.getY();
             for (int i = pane.getChildren().size()-1; i >= 0; i --) {
                 if (pane.getChildren().get(i).contains(xStartingPosition, yStartingPosition)) {
                     index = i;
-                    isFound = true;
                     //app.getGUI().updateToolbarControls(false);
                     break;
                 }
@@ -183,37 +201,17 @@ public class PageEditController {
             
             if (index != -1) {
                 diagram = (Diagram)pane.getChildren().get(index);
-                if (!isFound) {
-                    diagram.getNameSection().setStroke(Color.BLACK);
-                    if(diagram.getVariableSection() != null)
-                        diagram.getVariableSection().setStroke(Color.BLACK);
-                    if(diagram.getMethodSection() != null)
-                        diagram.getMethodSection().setStroke(Color.BLACK);
-                    index = -1;
-                    workspace.getNameTextField().setText("");
-                    workspace.getPackageTextField().setText("");
-                    workspace.getParentComboBox().setValue("");
-//                    workspace.getremoveButton().setDisable(true);
-//                    workspace.getDownButton().setDisable(true);
-//                    workspace.getUpButton().setDisable(true);
-                }
-                else {
-                    diagram.getNameSection().setStroke(Color.BLUE);
-                    if(diagram.getVariableSection() != null)
-                        diagram.getVariableSection().setStroke(Color.BLUE);
-                    if(diagram.getMethodSection() != null)
-                        diagram.getMethodSection().setStroke(Color.BLUE);
-                    workspace.getNameTextField().setText(diagram.getNameText().getText());
-                    workspace.getPackageTextField().setText(diagram.getPackageText());
-                    workspace.getParentComboBox().setValue(diagram.getParentName());
-//                    workspace.getremoveButton().setDisable(false);
-//                    workspace.getDownButton().setDisable(false);
-//                    workspace.getUpButton().setDisable(false);
-                }
-                
-//                workspace.getFillColorPicker().setValue((Color)object.getFill());
-//                workspace.getOutlineColorPicker().setValue((Color)object.getStroke());
-//                workspace.getOutlineThiknessSlider().setValue(object.getStrokeWidth());
+                diagram.getNameSection().setStroke(Color.BLUE);
+                if(diagram.getVariableSection() != null)
+                    diagram.getVariableSection().setStroke(Color.BLUE);
+                if(diagram.getMethodSection() != null)
+                    diagram.getMethodSection().setStroke(Color.BLUE);
+                workspace.getNameTextField().setText(diagram.getNameText().getText());
+                workspace.getPackageTextField().setText(diagram.getPackageText());
+                workspace.getParentComboBox().setValue(findDiagramName(diagram.getParentId()));
+//                workspace.getremoveButton().setDisable(false);
+//                workspace.getDownButton().setDisable(false);
+//                workspace.getUpButton().setDisable(false);                  
             }
         } ) ;
         
@@ -294,7 +292,6 @@ public class PageEditController {
                 index = -1;
                 dragged = false;
             }
-            workspace.reloadWorkspace();
         } ) ;
     }
 
@@ -302,8 +299,9 @@ public class PageEditController {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
-    public void handlePackageNameUpdateRequest(String packageName) {        
-        Pane pane = app.getGUI().getCenterPane();
+    public void handlePackageNameUpdateRequest(String packageName) {
+        Workspace workspace = (Workspace) app.getWorkspaceComponent();
+        Pane pane = workspace.getLeftPane();
         if (index != -1){
             diagram = (Diagram)pane.getChildren().get(index);
             diagram.setPackageName(packageName);
@@ -311,7 +309,8 @@ public class PageEditController {
     }
 
     public void handleAddMethodsRequest() {
-        Pane pane = app.getGUI().getCenterPane();
+        Workspace workspace = (Workspace) app.getWorkspaceComponent();
+        Pane pane = workspace.getLeftPane();
         if (index != -1){
             diagram = (Diagram)pane.getChildren().get(index);
             diagram.addMethod();
@@ -347,11 +346,36 @@ public class PageEditController {
     }
 
     public void handleParentComboBoxUpdateRequest(String parentName) {
-        Pane pane = app.getGUI().getCenterPane();
+        Workspace workspace = (Workspace) app.getWorkspaceComponent();
+        Pane pane = workspace.getLeftPane();
         if (index != -1){
             diagram = (Diagram)pane.getChildren().get(index);
             diagram.setParentName(parentName);
-            //diagram.setParentId(index);
+            diagram.setParentId(findDiagramId(parentName));
         }
+    }
+    
+    public String findDiagramName(int diagramId) {
+        Workspace workspace = (Workspace) app.getWorkspaceComponent();
+        Pane pane = workspace.getLeftPane();
+        for(int i = 0; i < pane.getChildren().size(); i++) {
+            Diagram diagram = (Diagram)pane.getChildren().get(i);
+            if(diagram.getDiagramId() == diagramId) {
+                return diagram.getNameText().getText();
+            }
+        }
+        return "";
+    }
+    
+    public int findDiagramId(String diagramName) {
+        Workspace workspace = (Workspace) app.getWorkspaceComponent();
+        Pane pane = workspace.getLeftPane();
+        for(int i = 0; i < pane.getChildren().size(); i++) {
+            Diagram diagram = (Diagram)pane.getChildren().get(i);
+            if(diagram.getNameText().getText().equals(diagramName)) {
+                return i;
+            }
+        }
+        return -1;
     }
 }

@@ -6,6 +6,9 @@
 package jcd.gui;
 
 import java.io.IOException;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
 import static javafx.geometry.Orientation.VERTICAL;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
@@ -13,6 +16,7 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Separator;
+import javafx.scene.control.SplitPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import static javafx.scene.control.TableView.CONSTRAINED_RESIZE_POLICY;
@@ -57,7 +61,11 @@ public class Workspace extends AppWorkspaceComponent {
     // THIS HANDLES INTERACTIONS WITH PAGE EDITING CONTROLS
     PageEditController pageEditController;
     
+    // WE'LL PUT THE WORKSPACE INSIDE A SPLIT PANE
+    SplitPane workspaceSplitPane;
+    
     // The pane for editing options
+    Pane leftPane;
     VBox rightPane;
     GridPane infoGridPaneOne;
     GridPane infoGridPaneTwo;
@@ -113,11 +121,33 @@ public class Workspace extends AppWorkspaceComponent {
      * data for setting up the user interface.
      */
     public Workspace(AppTemplate initApp) throws IOException {
-	// KEEP THIS FOR LATER
+        // KEEP THIS FOR LATER
 	app = initApp;
 
 	// KEEP THE GUI FOR LATER
 	gui = app.getGUI();
+        
+        // THIS WILL PROVIDE US WITH OUR CUSTOM UI SETTINGS AND TEXT
+	PropertiesManager propsSingleton = PropertiesManager.getPropertiesManager();
+        
+        // LOAD ALL THE HTML TAG TYPES
+	FileManager fileManager = (FileManager) app.getFileComponent();
+	DataManager dataManager = (DataManager) app.getDataComponent();
+        
+        // WE'LL PUT THE WORKSPACE INSIDE A SPLIT PANE
+        workspaceSplitPane = new SplitPane();
+        
+        // WE'LL ORGANIZE OUR WORKSPACE COMPONENTS USING A BORDER PANE
+	workspace = new Pane();
+        
+        // THESE ARE THE MAIN TWO PANES OF THE APPLICATION
+        leftPane = new Pane();
+        leftPane.setMinSize(1050, 800);
+        leftPane.setMaxSize(1050, 800);
+        rightPane = new VBox(20);
+        rightPane.setPadding(new Insets(8, 12, 8, 12));
+        rightPane.setMaxWidth(370);
+        rightPane.setMinHeight(800);
         
         // THIS WILL MANAGE ALL EDITING EVENTS
 	pageEditController = new PageEditController((jClassDesigner) app);
@@ -141,7 +171,6 @@ public class Workspace extends AppWorkspaceComponent {
         gui.getToolbarPane().getChildren().addAll(gridCheckBox, snapCheckBox, new Separator(VERTICAL));
         helpButton = gui.initChildButton(gui.getToolbarPane(), HELP_ICON.toString(), HELP_TOOLTIP.toString(), false);
         infoButton = gui.initChildButton(gui.getToolbarPane(), INFO_ICON.toString(), INFO_TOOLTIP.toString(), false);
-        rightPane = gui.getRightPane();
         infoGridPaneOne = new GridPane();
         infoGridPaneOne.setVgap(20);
         infoGridPaneTwo = new GridPane();
@@ -195,7 +224,7 @@ public class Workspace extends AppWorkspaceComponent {
         tempScrollPaneTwo.setMaxSize(340, 210);
         
         rightPane.getChildren().addAll(infoGridPaneTwo, tempScrollPaneTwo);
-        
+                
         saveAsPhotoButton.setOnAction(e -> {
             pageEditController.handleSaveAsPhotoRequest();
         });
@@ -244,7 +273,7 @@ public class Workspace extends AppWorkspaceComponent {
         packageTextField.setOnKeyReleased(e -> {
             pageEditController.handlePackageNameUpdateRequest(packageTextField.getText());
         });
-        parentComboBox.setOnAction(e -> {
+        parentComboBox.setOnHiding(e -> {
             if(parentComboBox.getValue() != null)
                 pageEditController.handleParentComboBoxUpdateRequest(parentComboBox.getValue().toString());
         });
@@ -260,27 +289,22 @@ public class Workspace extends AppWorkspaceComponent {
         removeMethodsButton.setOnAction(e -> {
             pageEditController.handleRemoveMethodsRequest();
         });
-        // THIS WILL PROVIDE US WITH OUR CUSTOM UI SETTINGS AND TEXT
-	PropertiesManager propsSingleton = PropertiesManager.getPropertiesManager();
-        
-        // LOAD ALL THE HTML TAG TYPES
-	FileManager fileManager = (FileManager) app.getFileComponent();
-	DataManager dataManager = (DataManager) app.getDataComponent();
         
         // NOTE THAT WE HAVE NOT PUT THE WORKSPACE INTO THE WINDOW,
 	// THAT WILL BE DONE WHEN THE USER EITHER CREATES A NEW
 	// COURSE OR LOADS AN EXISTING ONE FOR EDITING
 	workspaceActivated = false;
         
-        
         //SET THE RIGHT PANE OF DATA MANAGER
-        dataManager.setRigthPane(rightPane);
+        dataManager.setLeftPane(leftPane);
+        workspaceSplitPane.getItems().addAll(leftPane, rightPane);
+        workspace.getChildren().add(workspaceSplitPane);
         reloadWorkspace();
         
     }
     
-    public Pane getRightPane() {
-        return rightPane;
+    public Pane getLeftPane() {
+        return leftPane;
     }
     
     public TextField getNameTextField() {
@@ -294,6 +318,15 @@ public class Workspace extends AppWorkspaceComponent {
     public ComboBox getParentComboBox() {
         return parentComboBox;
     }
+    
+    public TableView getVariablesTableView() {
+        return variablesTableView;
+    }
+    
+    public TableView getMethodsTableView() {
+        return methodsTableView;
+    }
+    
     
     /**
      * This function specifies the CSS style classes for all the UI components
@@ -318,10 +351,10 @@ public class Workspace extends AppWorkspaceComponent {
      */
     @Override
     public void reloadWorkspace() {
-        if(!app.getGUI().getCenterPane().getChildren().isEmpty()) {
+        if(!leftPane.getChildren().isEmpty()) {
             parentComboBox.getItems().clear();
-            for(int i = 0; i < app.getGUI().getCenterPane().getChildren().size(); i++) {
-                Diagram diagram = (Diagram)app.getGUI().getCenterPane().getChildren().get(i);
+            for(int i = 0; i < leftPane.getChildren().size(); i++) {
+                Diagram diagram = (Diagram)leftPane.getChildren().get(i);
                 parentComboBox.getItems().add(diagram.getNameText().getText());
             }
         }

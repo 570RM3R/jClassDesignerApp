@@ -5,9 +5,7 @@
  */
 package jcd.data;
 
-import javafx.scene.control.ColorPicker;
 import javafx.scene.layout.Pane;
-import javafx.scene.paint.Color;
 import paf.components.AppDataComponent;
 import paf.AppTemplate;
 
@@ -19,7 +17,7 @@ import paf.AppTemplate;
  * @version 1.0
  */
 public class DataManager implements AppDataComponent {
-    Pane rightPane;
+    Pane leftPane;
     // THIS IS A SHARED REFERENCE TO THE APPLICATION
     AppTemplate app;
 
@@ -41,14 +39,15 @@ public class DataManager implements AppDataComponent {
      */
     @Override
     public void reset() {
-        app.getGUI().getCenterPane().setStyle("-fx-background-color:#e0eae1;");
+        leftPane.getChildren().clear();
+        leftPane.setStyle("-fx-background-color:#FFFFFF;");
     }
     
-    public void setRigthPane(Pane pane) {
-        rightPane = pane;
+    public void setLeftPane(Pane pane) {
+        leftPane = pane;
     }
     
     public Pane getRightPane() {
-        return rightPane;
+        return leftPane;
     }
 }
