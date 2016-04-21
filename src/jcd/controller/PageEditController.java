@@ -10,14 +10,14 @@ import java.io.IOException;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.Cursor;
 import javafx.scene.SnapshotParameters;
-import javafx.scene.control.TableColumn;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
-import javafx.scene.text.Text;
 import javax.imageio.ImageIO;
 import jcd.Diagram;
+import jcd.Method;
+import jcd.Variable;
 import jcd.gui.Workspace;
 import jcd.jClassDesigner;
 import properties_manager.PropertiesManager;
@@ -64,14 +64,16 @@ public class PageEditController {
     
     public void handleAddClassRequest() {
         Workspace workspace = (Workspace) app.getWorkspaceComponent();
-        workspace.reloadWorkspace();
+        workspace.reloadWorkspace(index);
         Pane pane = workspace.getLeftPane();
         pane.setCursor(Cursor.CROSSHAIR);
         pane.setOnMousePressed((MouseEvent event) -> {
-            diagram = new Diagram(event.getX(), event.getY(), false);
+            diagram = new Diagram(-1, event.getX(), event.getY(), "", "", false, "", "", "", -1);
+            diagram.setFill(Color.web("#e0eae1"));
+            diagram.dynamicPosition();
             pane.getChildren().add(diagram);
         } ) ;
-        workspace.reloadWorkspace();
+        workspace.reloadWorkspace(index);
     }
         
     public void handleSaveAsCodeRequest() {
@@ -80,14 +82,16 @@ public class PageEditController {
 
     public void handleAddInterfaceRequest() {
         Workspace workspace = (Workspace) app.getWorkspaceComponent();
-        workspace.reloadWorkspace();
+        workspace.reloadWorkspace(index);
         Pane pane = workspace.getLeftPane();
         pane.setCursor(Cursor.CROSSHAIR);
         pane.setOnMousePressed((MouseEvent event) -> {
-            diagram = new Diagram(event.getX(), event.getY(), true);
+            diagram = new Diagram(-1, event.getX(), event.getY(), "", "", true, "", "", "", -1);
+            diagram.setFill(Color.web("#e0eae1"));
+            diagram.dynamicPosition();
             pane.getChildren().add(diagram);
         } ) ;
-        workspace.reloadWorkspace();
+        workspace.reloadWorkspace(index);
         
     }
     
@@ -97,21 +101,21 @@ public class PageEditController {
         if(index != -1) {
             pane.getChildren().remove(index);
             index = -1;
-            workspace.getNameTextField().setText("");
-            workspace.getPackageTextField().setText("");
-            workspace.getParentComboBox().setValue("");
         }
-        workspace.reloadWorkspace();
+        workspace.getNameTextField().setText("");
+        workspace.getPackageTextField().setText("");
+        workspace.getParentComboBox().setValue("");
+        workspace.reloadWorkspace(index);
     }
     
     public void handleSaveAsPhotoRequest() {
         Workspace workspace = (Workspace) app.getWorkspaceComponent();
         PropertiesManager props = PropertiesManager.getPropertiesManager();
-        workspace.reloadWorkspace();
+        workspace.reloadWorkspace(index);
         Pane pane = workspace.getLeftPane();
         if (index != -1) {
             diagram = (Diagram)pane.getChildren().get(index);
-            diagram.getMethodSection().setStroke(Color.BLACK);
+            diagram.setStroke(Color.BLACK);
         }
         WritableImage image = pane.snapshot(new SnapshotParameters(), null);
         File file = new File("ClassDiagram.png");
@@ -123,9 +127,9 @@ public class PageEditController {
         }
         if (index != -1) {
             diagram = (Diagram)pane.getChildren().get(index);
-            diagram.getMethodSection().setStroke(Color.BLUE);
+            diagram.setStroke(Color.BLUE);
         }
-        workspace.reloadWorkspace();
+        workspace.reloadWorkspace(index);
     }
 
     public void handleAddVariablesRequest() {
@@ -133,7 +137,7 @@ public class PageEditController {
         Pane pane = workspace.getLeftPane();
         if (index != -1){
             diagram = (Diagram)pane.getChildren().get(index);
-            diagram.addVariable();
+            diagram.addVariable(new Variable("newRandomVariableLaLaLa", "int", true, "public"));
         }
     }
 
@@ -147,16 +151,8 @@ public class PageEditController {
         if(index != -1){
             diagram = (Diagram)pane.getChildren().get(index);
             diagram.getNameText().setText(name);
-            double newWidth = new Text(name).getLayoutBounds().getWidth();
-            // Resize the diagram dynamically
-            if(diagram.getNameSection().getWidth() - 12 <= new Text(name).getLayoutBounds().getWidth()) {
-                diagram.getNameSection().setWidth(newWidth + 12);
-                if(diagram.getVariableSection() != null)
-                    diagram.getVariableSection().setWidth(newWidth + 12);
-                if(diagram.getMethodSection() != null)
-                    diagram.getMethodSection().setWidth(newWidth + 12);
-            }
-            workspace.reloadWorkspace();
+            diagram.dynamicResize();
+            workspace.reloadWorkspace(index);
         }
     }
     
@@ -170,7 +166,7 @@ public class PageEditController {
 //        workspace.getDownButton().setDisable(true);
 //        workspace.getUpButton().setDisable(true);
         Workspace workspace = (Workspace) app.getWorkspaceComponent();
-        workspace.reloadWorkspace();
+        workspace.reloadWorkspace(index);
         Pane pane = workspace.getLeftPane();
         pane.setCursor(Cursor.HAND);
         
@@ -178,11 +174,7 @@ public class PageEditController {
             // Unselect previously selected item and set the index -1
             if (index != -1) {
                 diagram = (Diagram)pane.getChildren().get(index);
-                diagram.getNameSection().setStroke(Color.BLACK);
-                if(diagram.getVariableSection() != null)
-                    diagram.getVariableSection().setStroke(Color.BLACK);
-                if(diagram.getMethodSection() != null)
-                    diagram.getMethodSection().setStroke(Color.BLACK);
+                diagram.setStroke(Color.BLACK);
                 workspace.getNameTextField().setText("");
                 workspace.getPackageTextField().setText("");
                 workspace.getParentComboBox().setValue("");
@@ -201,11 +193,7 @@ public class PageEditController {
             
             if (index != -1) {
                 diagram = (Diagram)pane.getChildren().get(index);
-                diagram.getNameSection().setStroke(Color.BLUE);
-                if(diagram.getVariableSection() != null)
-                    diagram.getVariableSection().setStroke(Color.BLUE);
-                if(diagram.getMethodSection() != null)
-                    diagram.getMethodSection().setStroke(Color.BLUE);
+                diagram.setStroke(Color.BLUE);
                 workspace.getNameTextField().setText(diagram.getNameText().getText());
                 workspace.getPackageTextField().setText(diagram.getPackageText());
                 workspace.getParentComboBox().setValue(findDiagramName(diagram.getParentId()));
@@ -220,72 +208,18 @@ public class PageEditController {
                 xEndingPosition = event.getX();
                 yEndingPosition = event.getY();
                 diagram = (Diagram)pane.getChildren().get(index);
-                diagram.getNameSection().setLayoutX(xEndingPosition - xStartingPosition);
-                diagram.getNameSection().setLayoutY(yEndingPosition - yStartingPosition);
-                diagram.getNameText().setLayoutX(xEndingPosition - xStartingPosition);
-                diagram.getNameText().setLayoutY(yEndingPosition - yStartingPosition);
-                if(diagram.isInterface()) {
-                    diagram.getInterfaceText().setLayoutX(xEndingPosition - xStartingPosition);
-                    diagram.getInterfaceText().setLayoutY(yEndingPosition - yStartingPosition);
-                }               
-                if(diagram.getVariableSection() != null) {
-                    diagram.getVariableSection().setLayoutX(xEndingPosition - xStartingPosition);
-                    diagram.getVariableSection().setLayoutY(yEndingPosition - yStartingPosition);
-                    diagram.getVariableText().setLayoutX(xEndingPosition - xStartingPosition);
-                    diagram.getVariableText().setLayoutY(yEndingPosition - yStartingPosition);
-                }
-                if(diagram.getMethodSection() != null) {
-                    diagram.getMethodSection().setLayoutX(xEndingPosition - xStartingPosition);
-                    diagram.getMethodSection().setLayoutY(yEndingPosition - yStartingPosition);
-                    diagram.getMethodText().setLayoutX(xEndingPosition - xStartingPosition);
-                    diagram.getMethodText().setLayoutY(yEndingPosition - yStartingPosition);
-                }
+                diagram.setLayout(xEndingPosition - xStartingPosition, yEndingPosition - yStartingPosition);
                 dragged = true;
             }
         } ) ;
 
         pane.setOnMouseReleased((MouseEvent event) -> {
             if (dragged) {
-                diagram = (Diagram)pane.getChildren().get(index);
-                diagram.getNameSection().setStroke(Color.BLACK);
-                if(diagram.getVariableSection() != null)
-                    diagram.getVariableSection().setStroke(Color.BLACK);
-                if(diagram.getMethodSection() != null)
-                    diagram.getMethodSection().setStroke(Color.BLACK);
-                diagram.getNameSection().setX(diagram.getNameSection().getX() + diagram.getNameSection().getLayoutX());
-                diagram.getNameSection().setY(diagram.getNameSection().getY() + diagram.getNameSection().getLayoutY());
-                diagram.getNameText().setX(diagram.getNameText().getX() + diagram.getNameText().getLayoutX());
-                diagram.getNameText().setY(diagram.getNameText().getY() + diagram.getNameText().getLayoutY());
-                diagram.getNameSection().setLayoutX(0);
-                diagram.getNameSection().setLayoutY(0);
-                diagram.getNameText().setLayoutX(0);
-                diagram.getNameText().setLayoutY(0);
-                if(diagram.isInterface()) {
-                    diagram.getInterfaceText().setX(diagram.getInterfaceText().getX() + diagram.getInterfaceText().getLayoutX());
-                    diagram.getInterfaceText().setY(diagram.getInterfaceText().getY() + diagram.getInterfaceText().getLayoutY());
-                    diagram.getInterfaceText().setLayoutX(0);
-                    diagram.getInterfaceText().setLayoutY(0);
-                }  
-                if(diagram.getVariableSection() != null) {
-                    diagram.getVariableSection().setX(diagram.getVariableSection().getX() + diagram.getVariableSection().getLayoutX());
-                    diagram.getVariableSection().setY(diagram.getVariableSection().getY() + diagram.getVariableSection().getLayoutY());
-                    diagram.getVariableText().setX(diagram.getVariableText().getX() + diagram.getVariableText().getLayoutX());
-                    diagram.getVariableText().setY(diagram.getVariableText().getY() + diagram.getVariableText().getLayoutY());
-                    diagram.getVariableSection().setLayoutX(0);
-                    diagram.getVariableSection().setLayoutY(0);
-                    diagram.getVariableText().setLayoutX(0);
-                    diagram.getVariableText().setLayoutY(0);
-                }
-                if(diagram.getMethodSection() != null) {
-                    diagram.getMethodSection().setX(diagram.getMethodSection().getX() + diagram.getMethodSection().getLayoutX());
-                    diagram.getMethodSection().setY(diagram.getMethodSection().getY() + diagram.getMethodSection().getLayoutY());
-                    diagram.getMethodText().setX(diagram.getMethodText().getX() + diagram.getMethodText().getLayoutX());
-                    diagram.getMethodText().setY(diagram.getMethodText().getY() + diagram.getMethodText().getLayoutY());
-                    diagram.getMethodSection().setLayoutX(0);
-                    diagram.getMethodSection().setLayoutY(0);
-                    diagram.getMethodText().setLayoutX(0);
-                    diagram.getMethodText().setLayoutY(0);
-                }
+                diagram = (Diagram)pane.getChildren().get(index);               
+                diagram.setStroke(Color.BLACK); 
+                diagram.setPosition(diagram.getNameSection().getX() + diagram.getNameSection().getLayoutX(),
+                        diagram.getNameSection().getY() + diagram.getNameSection().getLayoutY());
+                diagram.setLayout(0, 0);
 //                workspace.getremoveButton().setDisable(true);
 //                workspace.getDownButton().setDisable(true);
 //                workspace.getUpButton().setDisable(true);
@@ -313,7 +247,7 @@ public class PageEditController {
         Pane pane = workspace.getLeftPane();
         if (index != -1){
             diagram = (Diagram)pane.getChildren().get(index);
-            diagram.addMethod();
+            diagram.addMethod(new Method("newMethodLaLaLa", "int" , true , true, "private" , "int x", "int y", "int z"));
         }
     }
 
@@ -353,6 +287,7 @@ public class PageEditController {
             diagram.setParentName(parentName);
             diagram.setParentId(findDiagramId(parentName));
         }
+
     }
     
     public String findDiagramName(int diagramId) {

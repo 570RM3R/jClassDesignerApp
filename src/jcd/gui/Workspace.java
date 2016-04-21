@@ -107,6 +107,8 @@ public class Workspace extends AppWorkspaceComponent {
     TableView variablesTableView;
     TableView methodsTableView;
     
+    final ObservableList<String> accessOption;
+    
     // HERE ARE OUR DIALOGS
     AppMessageDialogSingleton messageDialog;
     AppYesNoCancelDialogSingleton yesNoCancelDialog;
@@ -142,12 +144,14 @@ public class Workspace extends AppWorkspaceComponent {
         
         // THESE ARE THE MAIN TWO PANES OF THE APPLICATION
         leftPane = new Pane();
-        leftPane.setMinSize(1050, 800);
-        leftPane.setMaxSize(1050, 800);
+        leftPane.setMinSize(1070, 800);
+        leftPane.setMaxSize(1070, 800);
         rightPane = new VBox(20);
         rightPane.setPadding(new Insets(8, 12, 8, 12));
-        rightPane.setMaxWidth(370);
+        rightPane.setMaxWidth(360);
         rightPane.setMinHeight(800);
+        
+        accessOption = FXCollections.observableArrayList("public", "protected", "<no modifier>", "private");
         
         // THIS WILL MANAGE ALL EDITING EVENTS
 	pageEditController = new PageEditController((jClassDesigner) app);
@@ -211,7 +215,7 @@ public class Workspace extends AppWorkspaceComponent {
         
         infoGridPaneOne.add(tempHBoxOne, 1, 3);
         ScrollPane tempScrollPaneOne = new ScrollPane(variablesTableView);
-        tempScrollPaneOne.setMaxSize(340, 210);
+        tempScrollPaneOne.setMaxSize(360, 210);
         
         rightPane.getChildren().addAll(infoGridPaneOne, tempScrollPaneOne);
         
@@ -221,7 +225,7 @@ public class Workspace extends AppWorkspaceComponent {
         removeMethodsButton = gui.initChildButton(tempHBoxTwo, MINUS_ICON.toString(), REMOVE_METHOD_TOOLTIP.toString(), false);
         infoGridPaneTwo.add(tempHBoxTwo, 1, 0);
         ScrollPane tempScrollPaneTwo = new ScrollPane(methodsTableView);
-        tempScrollPaneTwo.setMaxSize(340, 210);
+        tempScrollPaneTwo.setMaxSize(360, 210);
         
         rightPane.getChildren().addAll(infoGridPaneTwo, tempScrollPaneTwo);
                 
@@ -242,6 +246,7 @@ public class Workspace extends AppWorkspaceComponent {
         });
         addClassButton.setOnAction(e -> {
             pageEditController.handleAddClassRequest();
+            gui.getFileController().markAsEdited(gui);
         });
         addInterfaceButton.setOnAction(e -> {
             pageEditController.handleAddInterfaceRequest();
@@ -299,7 +304,7 @@ public class Workspace extends AppWorkspaceComponent {
         dataManager.setLeftPane(leftPane);
         workspaceSplitPane.getItems().addAll(leftPane, rightPane);
         workspace.getChildren().add(workspaceSplitPane);
-        reloadWorkspace();
+        reloadWorkspace(-1);
         
     }
     
@@ -342,15 +347,17 @@ public class Workspace extends AppWorkspaceComponent {
         parentLabel.getStyleClass().add(CLASS_SUB_HEADING_TEXT);
         variablesLabel.getStyleClass().add(CLASS_SUB_HEADING_TEXT);
         methodsLabel.getStyleClass().add(CLASS_SUB_HEADING_TEXT);
+        rightPane.getStyleClass().add(CLASS_BORDER_PANE);
         
     }
 
     /**
      * This function reloads all the controls for editing tag attributes into
      * the workspace.
+     * @param index
      */
     @Override
-    public void reloadWorkspace() {
+    public void reloadWorkspace(int index) {
         if(!leftPane.getChildren().isEmpty()) {
             parentComboBox.getItems().clear();
             for(int i = 0; i < leftPane.getChildren().size(); i++) {

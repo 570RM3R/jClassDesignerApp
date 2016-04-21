@@ -5,16 +5,57 @@
  */
 package jcd;
 
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-
 /**
  *
  * @author Saeid
  */
 public class Variable {
-    String methodName;
+    String variableName;
     String typeName;
     boolean isStatic;
-    final ObservableList<String> accessOption = FXCollections.observableArrayList("public", "protected", "<no modifier>", "private");
+    String accessType;
+    
+    public Variable(String variableName, String typeName, boolean isStatic, String accessType) {
+        this.variableName = variableName;
+        this.typeName = typeName;
+        this.isStatic = isStatic;
+        this.accessType = accessType;
+    }
+    
+    public String getVariableName() {
+        return variableName;
+    }
+    
+    public String getTypeName() {
+        return typeName;
+    }
+    
+    public boolean getStatic() {
+        return isStatic;
+    }
+    
+    public String getAccessType() {
+        return accessType;
+    }
+    
+    public void setVariableName(String variableName) {
+        this.variableName = variableName;
+    }
+    
+    public void setTypeName(String typeName) {
+        this.typeName = typeName;
+    }
+    
+    public void setStatic(boolean isStatic) {
+        this.isStatic = isStatic;
+    }
+    
+    public void setAccessType(String accessType) {
+        this.accessType = accessType;
+    }
+    
+    @Override
+    public String toString() {
+        return accessType + (isStatic ? " static " : " ") + typeName + " " + variableName;
+    }
 }

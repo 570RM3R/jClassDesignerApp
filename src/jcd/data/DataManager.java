@@ -47,7 +47,7 @@ public class DataManager implements AppDataComponent {
         leftPane = pane;
     }
     
-    public Pane getRightPane() {
+    public Pane getLeftPane() {
         return leftPane;
     }
 }

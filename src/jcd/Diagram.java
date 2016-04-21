@@ -31,32 +31,33 @@ public class Diagram extends Parent{
     ObservableList<Method> methodData;
     String parentName;
     int parentId;
-
-    public Diagram(double x, double y, boolean isInterface) {
-        diagramId = idCounter;
+    
+    public Diagram(int diagramId, double x, double y, String nameString, String packageName, boolean isInterface, String variableString, String methodString, String parentName, int parentId) {
+        this.diagramId = diagramId == -1 ? Diagram.idCounter : diagramId;
         nameSection = new Rectangle(125, 30);
         nameSection.setStroke(Color.BLACK);
-        nameSection.setFill(Color.web("#e0eae1"));
-        nameSection.setX(x - 100);
-        nameSection.setY(y - 20);
-        nameText = new Text();
+        nameSection.setX(x - 62.5);
+        nameSection.setY(y - 15);
+        nameText = new Text(nameString);
         if(isInterface) {
-            interfaceText = new Text(nameSection.getX() + 6, nameSection.getY() + 18, "<<Interface>>");
+            interfaceText = new Text("<<Interface>>");
             nameSection.setHeight(45.4);
-            nameText.setX(nameSection.getX() + 6);
-            nameText.setY(nameSection.getY() + 36.4);
             getChildren().addAll(nameSection, interfaceText, nameText);
         }
         else {
-            nameText.setX(nameSection.getX() + 6);
-            nameText.setY(nameSection.getY() + 19);
             getChildren().addAll(nameSection, nameText);
             variableData = FXCollections.observableArrayList();
-        }   
+        }
+        this.packageName = packageName;
         this.isInterface = isInterface;
+        variableSection = new Rectangle();
+        variableText = new Text(variableString);
+        methodSection = new Rectangle();
+        methodText = new Text(methodString);
         methodData = FXCollections.observableArrayList();
-        parentName = "";
-        parentId = -1;
+        getChildren().addAll(variableSection, variableText, methodSection, methodText);
+        this.parentName = parentName;
+        this.parentId = parentId;
         idCounter++;
     }
     
@@ -108,6 +109,10 @@ public class Diagram extends Parent{
         return parentId;
     }
     
+    public static int getIdCounter() {
+        return idCounter; //To change body of generated methods, choose Tools | Templates.
+    }
+    
     public void setPackageName(String packageName) {
         this.packageName = packageName;
     }
@@ -120,56 +125,122 @@ public class Diagram extends Parent{
         this.parentName = parentName;
     }
     
-    public void addVariable() {
+    public static void setIdCounter(int idCounter) {
+        Diagram.idCounter = idCounter;
+    }
+    
+    public void addVariable(Variable newVariable) {
         if(!isInterface) {
-            if(variableSection == null){
-                variableSection = new Rectangle(nameSection.getWidth(), 30);
-                variableSection.setStroke(Color.BLUE);
-                variableSection.setFill(Color.web("#e0eae1"));
-                variableSection.setX(nameSection.getX());
-                variableSection.setY(nameSection.getY() + nameSection.getHeight());
-                if(methodSection != null) {
-                    methodSection.setY(variableSection.getY() + variableSection.getHeight());
-                    methodText.setY(methodSection.getY() + 5);
-                }
-                variableText = new Text();
-                variableText.setX(variableSection.getX() + 6);
-                variableText.setY(variableSection.getY() + 5);
-                getChildren().addAll(variableSection, variableText);
-            }
-            else {
-                if(!variableText.getText().equals("")) {
-                    variableSection.setHeight(variableSection.getHeight() + 15.4);
-                    if(methodSection != null) {
-                        methodSection.setY(methodSection.getY() + 15.4);
-                        methodText.setY(methodSection.getY() + 5);
-                    }
-                }
-                variableText.setText(variableText.getText() + "\nnew variable");
-            }
+            variableData.add(newVariable);
+            variableText.setText(variableText.getText() + "\n" + newVariable.toString());
+            dynamicResize();
+            dynamicPosition();
         }
     }
     
-    public void addMethod() {
-        if(methodSection == null){
-            methodSection = new Rectangle(nameSection.getWidth(), 30);
-            methodSection.setStroke(Color.BLUE);
-            methodSection.setFill(Color.web("#e0eae1"));
-            methodSection.setX(nameSection.getX());
-            if(variableSection == null)
-                methodSection.setY(nameSection.getY() + nameSection.getHeight());
-            else
+    public void addMethod(Method newMethod) {
+        methodData.add(newMethod);
+        methodText.setText(methodText.getText() + "\n" + newMethod.toString());
+        dynamicResize();
+        dynamicPosition();
+    }
+    
+    
+    public void dynamicPosition() {
+        nameText.setX(nameSection.getX() + 6);
+        nameText.setY(nameSection.getY() + 19);
+        if(isInterface()) {
+            interfaceText.setX(nameSection.getX() + 6);
+            interfaceText.setY(nameSection.getY() + 18);
+            nameText.setX(nameSection.getX() + 6);
+            nameText.setY(nameSection.getY() + 36.4);
+        }
+        variableSection.setX(nameSection.getX());
+        variableSection.setY(nameSection.getY() + nameSection.getHeight());
+        variableText.setX(variableSection.getX() + 6);
+        variableText.setY(variableSection.getY() + 6);
+        methodSection.setX(nameSection.getX());
+        methodSection.setY(variableSection.getY() + variableSection.getHeight());
+        methodText.setX(methodSection.getX() + 6);
+        methodText.setY(methodSection.getY() + 6);
+    }
+    
+    
+    public void dynamicResize() {      
+        double maxWidth = Math.max(Math.max(nameText.getLayoutBounds().getWidth(), variableText.getLayoutBounds().getWidth()), methodText.getLayoutBounds().getWidth());      
+        if(nameSection.getWidth() - 12 <= maxWidth) {
+            nameSection.setWidth(maxWidth + 12);
+            if(!variableText.getText().isEmpty())
+                variableSection.setWidth(maxWidth + 12);
+            if(!methodText.getText().isEmpty())
+                methodSection.setWidth(maxWidth + 12);
+        }
+        if(!variableText.getText().isEmpty()) {
+            variableSection.setHeight(variableText.getLayoutBounds().getHeight() + 5);
+            if(!methodText.getText().isEmpty()) {
                 methodSection.setY(variableSection.getY() + variableSection.getHeight());
-            methodText = new Text();
-            methodText.setX(methodSection.getX() + 6);
-            methodText.setY(methodSection.getY() + 5);
-            getChildren().addAll(methodSection, methodText);
-        }
-        else {
-            if(!methodText.getText().equals(""))
-                methodSection.setHeight(methodSection.getHeight() + 15.4);
-            methodText.setText(methodText.getText() + "\nnew method");
+                methodText.setY(methodSection.getY() + 5);
+                methodSection.setHeight(methodText.getLayoutBounds().getHeight() + 5);
+            }
+        }       
+        if(!methodText.getText().isEmpty()) {
+            methodSection.setHeight(methodText.getLayoutBounds().getHeight() + 5);
+            if(!variableText.getText().isEmpty()) {
+                variableSection.setHeight(variableText.getLayoutBounds().getHeight() + 5);
+                methodSection.setY(variableSection.getY() + variableSection.getHeight());
+                methodText.setY(methodSection.getY() + 5);
+            }
         }
     }
     
+    public void updateVariableText() {
+        for(int i = 0; i < variableData.size(); i++) {
+            variableText.setText("\n" + variableData.get(i).toString());
+        }
+        dynamicResize();
+    }
+    
+    public void updateMethodText() {
+        for(int i = 0; i < methodData.size(); i++) {
+            methodText.setText("\n" + methodData.get(i).toString());
+        }
+        dynamicResize();
+    }
+    
+    public void setStroke(Color color) {
+        nameSection.setStroke(color);
+        variableSection.setStroke(color);
+        methodSection.setStroke(color);
+    }
+    
+    public void setLayout(double LayoutX, double LayoutY) {
+        nameSection.setLayoutX(LayoutX);
+        nameSection.setLayoutY(LayoutY);
+        nameText.setLayoutX(LayoutX);
+        nameText.setLayoutY(LayoutY);
+        if(isInterface()) {
+            interfaceText.setLayoutX(LayoutX);
+            interfaceText.setLayoutY(LayoutY);
+        }
+        variableSection.setLayoutX(LayoutX);
+        variableSection.setLayoutY(LayoutY);
+        variableText.setLayoutX(LayoutX);
+        variableText.setLayoutY(LayoutY);
+        methodSection.setLayoutX(LayoutX);
+        methodSection.setLayoutY(LayoutY);
+        methodText.setLayoutX(LayoutX);
+        methodText.setLayoutY(LayoutY);
+    }
+    
+    public void setPosition(double PositionX, double PositionY) {
+        nameSection.setX(PositionX);
+        nameSection.setY(PositionY);
+        dynamicPosition();
+    }
+    
+    public void setFill(Color color) {
+        nameSection.setFill(color);
+        variableSection.setFill(color);
+        methodSection.setFill(color);
+    }
 }

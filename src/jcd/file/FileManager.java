@@ -16,9 +16,6 @@ import java.util.HashMap;
 import java.util.Map;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Ellipse;
-import javafx.scene.shape.Rectangle;
-import javafx.scene.shape.Shape;
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonArrayBuilder;
@@ -27,6 +24,7 @@ import javax.json.JsonReader;
 import javax.json.JsonWriter;
 import javax.json.JsonWriterFactory;
 import javax.json.stream.JsonGenerator;
+import jcd.Diagram;
 import jcd.data.DataManager;
 import paf.components.AppDataComponent;
 import paf.components.AppFileComponent;
@@ -44,16 +42,20 @@ public class FileManager implements AppFileComponent {
     public static final String JSON_FILE = "data.json";
     public static final String PATH_TEMP = "./temp/";
     public static final String TEMP_PAGE = PATH_TEMP + JSON_FILE;
-    public static final String JSON_POSE_OBJECT = "pose_object";
-    public static final String JSON_BACKGROUND_STYLE = "background_style";
-    public static final String JSON_TYPE_NAME = "type";
+    public static final String JSON_DIAGRAM_COLLECTION = "diagram_collections";
+    public static final String JSON_ID_COUNTER = "id_counter";
+    public static final String JSON_DIAGRAM_ID = "diagram_id";
     public static final String JSON_X_COORDINATE = "x_coordinate";
     public static final String JSON_Y_COORDINATE = "y_coordinate";
-    public static final String JSON_X_LENGTH = "x_length";
-    public static final String JSON_Y_LENGTH = "y_length";
-    public static final String JSON_STROKE_WIDTH = "stroke_width";
-    public static final String JSON_STROKE_COLOR = "stroke_color";
-    public static final String JSON_FILL_COLOR = "fill_color";
+    public static final String JSON_NAME_STRING = "name_string";
+    public static final String JSON_IS_INTERFACE = "is_interface";
+    public static final String JSON_PACKAGE_NAME = "package_name";
+    public static final String JSON_VARIABLE_DATA = "variable_data";
+    public static final String JSON_VARIABLE_STRING = "variable_string";
+    public static final String JSON_METHOD_DATA = "method_data";
+    public static final String JSON_METHOD_STRING = "method_string";
+    public static final String JSON_PARENT_NAME = "parent_name";
+    public static final String JSON_PARENT_ID = "parent_id";
 
 
     /**
@@ -71,23 +73,23 @@ public class FileManager implements AppFileComponent {
     @Override
     public void saveData(AppDataComponent data, String filePath) throws IOException {
         DataManager dataManager = (DataManager)data;
-        Pane pane = dataManager.getRightPane();
+        Pane pane = dataManager.getLeftPane();
         
         StringWriter sw = new StringWriter();
 
 	// THEN THE TREE
 	JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
         for (int i = 0; i < pane.getChildren().size(); i++) {
-            JsonObject poseObject = makePoseJsonObject((Shape)pane.getChildren().get(i));
-            arrayBuilder.add(poseObject);
+            JsonObject diagram = makeDiagramJsonObject((Diagram)pane.getChildren().get(i));
+            arrayBuilder.add(diagram);
         }
         
 	JsonArray nodesArray = arrayBuilder.build();
 	
 	// THEN PUT IT ALL TOGETHER IN A JsonObject
 	JsonObject dataManagerJSO = Json.createObjectBuilder()
-		.add(JSON_POSE_OBJECT, nodesArray)
-                .add(JSON_BACKGROUND_STYLE, pane.getStyle())
+		.add(JSON_DIAGRAM_COLLECTION, nodesArray)
+                .add(JSON_ID_COUNTER, Diagram.getIdCounter())
 		.build();
 	
 	// AND NOW OUTPUT IT TO A JSON FILE WITH PRETTY PRINTING
@@ -127,17 +129,15 @@ public class FileManager implements AppFileComponent {
         // CLEAR THE OLD DATA OUT
 	DataManager dataManager = (DataManager)data;
 	dataManager.reset();
-        Pane pane = dataManager.getRightPane();
+        Pane pane = dataManager.getLeftPane();
         pane.getChildren().clear();
 	
 	// LOAD THE JSON FILE WITH ALL THE DATA
 	JsonObject json = loadJSONFile(filePath);
-        pane.setStyle(json.getString(JSON_BACKGROUND_STYLE));
-        String backgroundColor = json.getString(JSON_BACKGROUND_STYLE).equals("") ? "ffef84" : json.getString(JSON_BACKGROUND_STYLE).substring(22, json.getString(JSON_BACKGROUND_STYLE).length()-1);
-	
+        
 	// LOAD THE TAG TREE
-	JsonArray jsonPoseArray = json.getJsonArray(JSON_POSE_OBJECT);
-	loadPoseObjects(jsonPoseArray, dataManager);
+	JsonArray jsonPoseArray = json.getJsonArray(JSON_DIAGRAM_COLLECTION);
+	loadDiagramObjects(jsonPoseArray, dataManager);
     }
 
     // HELPER METHOD FOR LOADING DATA FROM A JSON FORMAT
@@ -152,62 +152,51 @@ public class FileManager implements AppFileComponent {
     }
     
     // HELPER METHOD FOR LOADING DATA FROM A JSON FORMAT
-    private void loadPoseObjects(JsonArray jsonTagsArray, DataManager dataManager) {
-        Pane pane = dataManager.getRightPane();
+    private void loadDiagramObjects(JsonArray jsonTagsArray, DataManager dataManager) {
+        Pane pane = dataManager.getLeftPane();
 	// AND NOW JUST GO THROUGH THE REST OF THE ARRAY
 	for (int i = 0; i < jsonTagsArray.size(); i++) {
 	    JsonObject jsonObject = jsonTagsArray.getJsonObject(i);
-	    Shape shpae = loadShape(jsonObject);
-            pane.getChildren().add(shpae); 
+            pane.getChildren().add(loadDiagram(jsonObject)); 
 	}
     }
     
     // HELPER METHOD FOR LOADING DATA FROM A JSON FORMAT
-    private Shape loadShape(JsonObject jsonObject) {
-        Rectangle rectangle = new Rectangle();
-        Ellipse ellipse = new Ellipse();
-        if(jsonObject.getString(JSON_TYPE_NAME).equals("rectangle")) {
-            rectangle.setX(jsonObject.getInt(JSON_X_COORDINATE));
-            rectangle.setY(jsonObject.getInt(JSON_Y_COORDINATE));
-            rectangle.setWidth(jsonObject.getInt(JSON_X_LENGTH));
-            rectangle.setHeight(jsonObject.getInt(JSON_Y_LENGTH));
-            rectangle.setStrokeWidth(jsonObject.getInt(JSON_STROKE_WIDTH));
-            rectangle.setStroke(Color.web(jsonObject.getString(JSON_STROKE_COLOR)));
-            rectangle.setFill(Color.web(jsonObject.getString(JSON_FILL_COLOR)));
-            return (Shape)rectangle;
-        }
-        else {
-            ellipse.setCenterX(jsonObject.getInt(JSON_X_COORDINATE));
-            ellipse.setCenterY(jsonObject.getInt(JSON_Y_COORDINATE));
-            ellipse.setRadiusX(jsonObject.getInt(JSON_X_LENGTH));
-            ellipse.setRadiusY(jsonObject.getInt(JSON_Y_LENGTH));
-            ellipse.setStrokeWidth(jsonObject.getInt(JSON_STROKE_WIDTH));
-            ellipse.setStroke(Color.web(jsonObject.getString(JSON_STROKE_COLOR)));
-            ellipse.setFill(Color.web(jsonObject.getString(JSON_FILL_COLOR)));
-            return (Shape)ellipse;
-        }
-        
+    private Diagram loadDiagram(JsonObject jsonObject) {
+        Diagram diagram = new Diagram(
+                jsonObject.getInt(JSON_DIAGRAM_ID),
+                jsonObject.getInt(JSON_X_COORDINATE),
+                jsonObject.getInt(JSON_Y_COORDINATE),
+                jsonObject.getString(JSON_NAME_STRING),
+                jsonObject.getString(JSON_PACKAGE_NAME),
+                jsonObject.getInt(JSON_IS_INTERFACE) == 1,
+                jsonObject.getString(JSON_VARIABLE_STRING),
+                jsonObject.getString(JSON_METHOD_STRING),
+                jsonObject.getString(JSON_PARENT_NAME),
+                jsonObject.getInt(JSON_PARENT_ID)
+            );
+        diagram.setFill(Color.web("#e0eae1"));
+        diagram.dynamicResize();
+        diagram.dynamicPosition();
+        diagram.setStroke(Color.BLACK);
+        return diagram;
     }
     
     // HELPER METHOD FOR SAVING DATA TO A JSON FORMAT
-    private JsonObject makePoseJsonObject(Shape shape) {
-        Rectangle rectangle = new Rectangle();
-        Ellipse ellipse = new Ellipse();
-	if (shape instanceof Rectangle) {
-            rectangle = (Rectangle) shape;
-        }
-        else if (shape instanceof Ellipse) {
-            ellipse = (Ellipse) shape;
-        }
+    private JsonObject makeDiagramJsonObject(Diagram diagram) {
 	JsonObject jso = Json.createObjectBuilder()
-		.add(JSON_TYPE_NAME, shape instanceof Rectangle ? "rectangle" : "ellipse")
-		.add(JSON_X_COORDINATE, shape instanceof Rectangle ? rectangle.getX() : ellipse.getCenterX())
-		.add(JSON_Y_COORDINATE, shape instanceof Rectangle ? rectangle.getY() : ellipse.getCenterY())
-		.add(JSON_X_LENGTH, shape instanceof Rectangle ? rectangle.getWidth() : ellipse.getRadiusX())
-		.add(JSON_Y_LENGTH, shape instanceof Rectangle ? rectangle.getHeight() : ellipse.getRadiusY())
-                .add(JSON_STROKE_WIDTH, shape.getStrokeWidth())
-                .add(JSON_STROKE_COLOR, shape.getStroke().toString().substring(2))
-		.add(JSON_FILL_COLOR, shape.getFill().toString().substring(2))
+		.add(JSON_DIAGRAM_ID, diagram.getDiagramId())
+		.add(JSON_X_COORDINATE, diagram.getNameSection().getX() + 62.5)
+		.add(JSON_Y_COORDINATE, diagram.getNameSection().getY() + 15)
+		.add(JSON_NAME_STRING, diagram.getNameText().getText())
+                .add(JSON_PACKAGE_NAME, diagram.getParentName())
+		.add(JSON_IS_INTERFACE, diagram.isInterface() ? 1 : 0)
+                .add(JSON_VARIABLE_DATA, "")
+                .add(JSON_VARIABLE_STRING, diagram.getVariableText().getText())
+		.add(JSON_METHOD_DATA, "")
+                .add(JSON_METHOD_STRING, diagram.getMethodText().getText())
+                .add(JSON_PARENT_NAME, diagram.getParentName())
+                .add(JSON_PARENT_ID, diagram.getParentId())
 		.build();
 	return jso;
     }
