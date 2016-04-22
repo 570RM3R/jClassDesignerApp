@@ -14,6 +14,8 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javax.json.Json;
@@ -25,6 +27,8 @@ import javax.json.JsonWriter;
 import javax.json.JsonWriterFactory;
 import javax.json.stream.JsonGenerator;
 import jcd.Diagram;
+import jcd.Method;
+import jcd.Variable;
 import jcd.data.DataManager;
 import paf.components.AppDataComponent;
 import paf.components.AppFileComponent;
@@ -51,12 +55,18 @@ public class FileManager implements AppFileComponent {
     public static final String JSON_IS_INTERFACE = "is_interface";
     public static final String JSON_PACKAGE_NAME = "package_name";
     public static final String JSON_VARIABLE_DATA = "variable_data";
-    public static final String JSON_VARIABLE_STRING = "variable_string";
     public static final String JSON_METHOD_DATA = "method_data";
-    public static final String JSON_METHOD_STRING = "method_string";
-    public static final String JSON_PARENT_NAME = "parent_name";
     public static final String JSON_PARENT_ID = "parent_id";
-
+    public static final String JSON_VARIABLE_NAME = "variable_name";
+    public static final String JSON_TYPE_NAME = "type_name";
+    public static final String JSON_IS_STATIC = "is_static";
+    public static final String JSON_IS_ABSTRACT = "is_abstract";
+    public static final String JSON_ACCESS_TYPE = "access_type";
+    public static final String JSON_METHOD_NAME = "method_name";
+    public static final String JSON_RETURN_TYPE = "return_type";
+    public static final String JSON_ARGUMENT_ONE = "argument_one";
+    public static final String JSON_ARGUMENT_TWO = "argument_two";
+    public static final String JSON_ARGUMENT_THREE = "argument_three";
 
     /**
      * This method is for saving user work, which in the case of this
@@ -110,7 +120,57 @@ public class FileManager implements AppFileComponent {
 	pw.close();
 
     }
-      
+    
+    // HELPER METHOD FOR SAVING DATA TO A JSON FORMAT
+    private JsonObject makeDiagramJsonObject(Diagram diagram) {
+	JsonObject jsonDiagram = Json.createObjectBuilder()
+		.add(JSON_DIAGRAM_ID, diagram.getDiagramId())
+		.add(JSON_X_COORDINATE, diagram.getNameSection().getX() + 62.5)
+		.add(JSON_Y_COORDINATE, diagram.getNameSection().getY() + 15)
+		.add(JSON_NAME_STRING, diagram.getNameText().getText())
+                .add(JSON_PACKAGE_NAME, diagram.getPackageName())
+		.add(JSON_IS_INTERFACE, diagram.isInterface() ? 1 : 0)
+                .add(JSON_VARIABLE_DATA, buildVariableJsonArray(diagram.getVariableData()))
+		.add(JSON_METHOD_DATA, buildMethodJsonArray(diagram.getMethodData()))
+                .add(JSON_PARENT_ID, diagram.getParentId())
+		.build();
+	return jsonDiagram;
+    }
+    
+    // HELPER METHOD FOR SAVING DATA TO A JSON FORMAT
+    private JsonArray buildVariableJsonArray(ObservableList<Variable> variableData) {
+        JsonArrayBuilder variableArray = Json.createArrayBuilder();
+        for (Variable variable : variableData) {
+            JsonObject jsonVariable = Json.createObjectBuilder()
+		.add(JSON_VARIABLE_NAME, variable.getVariableName())
+		.add(JSON_TYPE_NAME, variable.getTypeName())
+		.add(JSON_IS_STATIC, variable.isStatic() ? 1 : 0)
+		.add(JSON_ACCESS_TYPE, variable.getAccessType())
+		.build();
+           variableArray.add(jsonVariable);
+        }
+        return variableArray.build();
+    }
+    
+    // HELPER METHOD FOR SAVING DATA TO A JSON FORMAT
+    private JsonArray buildMethodJsonArray(ObservableList<Method> methodData) {
+        JsonArrayBuilder methodArray = Json.createArrayBuilder();
+        for (Method method : methodData) {
+            JsonObject jsonVariable = Json.createObjectBuilder()
+		.add(JSON_METHOD_NAME, method.getMethodName())
+		.add(JSON_RETURN_TYPE, method.getReturnType())
+		.add(JSON_IS_STATIC, method.isStatic() ? 1 : 0)
+                .add(JSON_IS_ABSTRACT, method.isAbstract() ? 1 : 0)
+		.add(JSON_ACCESS_TYPE, method.getAccessType())
+                .add(JSON_ARGUMENT_ONE, method.getArgumentOne())
+                .add(JSON_ARGUMENT_TWO, method.getArgumentTwo())
+                .add(JSON_ARGUMENT_THREE, method.getArgumentThree())
+		.build();
+           methodArray.add(jsonVariable);
+        }
+        return methodArray.build();
+    }
+    
     /**
      * This method loads data from a JSON formatted file into the data 
      * management component and then forces the updating of the workspace
@@ -134,6 +194,8 @@ public class FileManager implements AppFileComponent {
 	
 	// LOAD THE JSON FILE WITH ALL THE DATA
 	JsonObject json = loadJSONFile(filePath);
+        
+        Diagram.setIdCounter(json.getInt(JSON_ID_COUNTER));
         
 	// LOAD THE TAG TREE
 	JsonArray jsonPoseArray = json.getJsonArray(JSON_DIAGRAM_COLLECTION);
@@ -170,64 +232,49 @@ public class FileManager implements AppFileComponent {
                 jsonObject.getString(JSON_NAME_STRING),
                 jsonObject.getString(JSON_PACKAGE_NAME),
                 jsonObject.getInt(JSON_IS_INTERFACE) == 1,
-                jsonObject.getString(JSON_VARIABLE_STRING),
-                jsonObject.getString(JSON_METHOD_STRING),
-                jsonObject.getString(JSON_PARENT_NAME),
+                buildVariableList(jsonObject.getJsonArray(JSON_VARIABLE_DATA)),
+                buildMethodList(jsonObject.getJsonArray(JSON_METHOD_DATA)),
                 jsonObject.getInt(JSON_PARENT_ID)
             );
+        diagram.updateVariableText();
+        diagram.updateMethodText();
+        diagram.setStroke(Color.BLACK);
         diagram.setFill(Color.web("#e0eae1"));
         diagram.dynamicResize();
         diagram.dynamicPosition();
-        diagram.setStroke(Color.BLACK);
         return diagram;
     }
     
-    // HELPER METHOD FOR SAVING DATA TO A JSON FORMAT
-    private JsonObject makeDiagramJsonObject(Diagram diagram) {
-	JsonObject jso = Json.createObjectBuilder()
-		.add(JSON_DIAGRAM_ID, diagram.getDiagramId())
-		.add(JSON_X_COORDINATE, diagram.getNameSection().getX() + 62.5)
-		.add(JSON_Y_COORDINATE, diagram.getNameSection().getY() + 15)
-		.add(JSON_NAME_STRING, diagram.getNameText().getText())
-                .add(JSON_PACKAGE_NAME, diagram.getParentName())
-		.add(JSON_IS_INTERFACE, diagram.isInterface() ? 1 : 0)
-                .add(JSON_VARIABLE_DATA, "")
-                .add(JSON_VARIABLE_STRING, diagram.getVariableText().getText())
-		.add(JSON_METHOD_DATA, "")
-                .add(JSON_METHOD_STRING, diagram.getMethodText().getText())
-                .add(JSON_PARENT_NAME, diagram.getParentName())
-                .add(JSON_PARENT_ID, diagram.getParentId())
-		.build();
-	return jso;
+    private ObservableList<Variable> buildVariableList(JsonArray variableArray) {
+        ObservableList<Variable> variableList = FXCollections.observableArrayList();
+        for (int i = 0; i < variableArray.size(); i++) {
+	    JsonObject jsonObject = variableArray.getJsonObject(i);
+            variableList.add(new Variable(
+            jsonObject.getString(JSON_VARIABLE_NAME),
+            jsonObject.getString(JSON_TYPE_NAME),
+            jsonObject.getInt(JSON_IS_STATIC) == 1,
+            jsonObject.getString(JSON_ACCESS_TYPE)
+            ));
+	}
+        return variableList;
     }
     
-    /**
-     * This method exports the contents of the data manager to a 
-     * Web page including the html page, needed directories, and
-     * the CSS file.
-     * 
-     * @param data The data management component.
-     * 
-     * @param filePath Path (including file name/extension) to where
-     * to export the page to.
-     * 
-     * @throws IOException Thrown should there be an error writing
-     * out data to the file.
-     */
-    @Override
-    public void exportData(AppDataComponent data, String filePath) throws IOException {
-        
-    }
-    
-    /**
-     * This method is provided to satisfy the compiler, but it
-     * is not used by this application.
-     */
-    @Override
-    public void importData(AppDataComponent data, String filePath) throws IOException {
-	// NOTE THAT THE Web Page Maker APPLICATION MAKES
-	// NO USE OF THIS METHOD SINCE IT NEVER IMPORTS
-	// EXPORTED WEB PAGES
+    private ObservableList<Method> buildMethodList(JsonArray methodArray) {
+        ObservableList<Method> methodList = FXCollections.observableArrayList();
+        for (int i = 0; i < methodArray.size(); i++) {
+	    JsonObject jsonObject = methodArray.getJsonObject(i);
+            methodList.add(new Method(
+            jsonObject.getString(JSON_METHOD_NAME),
+            jsonObject.getString(JSON_RETURN_TYPE),
+            jsonObject.getInt(JSON_IS_STATIC) == 1,
+            jsonObject.getInt(JSON_IS_ABSTRACT) == 1,
+            jsonObject.getString(JSON_ACCESS_TYPE),
+            jsonObject.getString(JSON_ARGUMENT_ONE),
+            jsonObject.getString(JSON_ARGUMENT_TWO),
+            jsonObject.getString(JSON_ARGUMENT_THREE)
+            ));
+	}
+        return methodList;
     }
     
         /**

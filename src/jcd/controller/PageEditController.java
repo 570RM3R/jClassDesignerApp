@@ -6,7 +6,13 @@
 package jcd.controller;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javafx.collections.FXCollections;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.Cursor;
 import javafx.scene.SnapshotParameters;
@@ -68,16 +74,52 @@ public class PageEditController {
         Pane pane = workspace.getLeftPane();
         pane.setCursor(Cursor.CROSSHAIR);
         pane.setOnMousePressed((MouseEvent event) -> {
-            diagram = new Diagram(-1, event.getX(), event.getY(), "", "", false, "", "", "", -1);
+            diagram = new Diagram(-1, event.getX(), event.getY(), "", "", false, FXCollections.observableArrayList(), FXCollections.observableArrayList(), -1);
+            diagram.setStroke(Color.BLACK);
             diagram.setFill(Color.web("#e0eae1"));
             diagram.dynamicPosition();
+            Diagram.setIdCounter(Diagram.getIdCounter() + 1);
             pane.getChildren().add(diagram);
         } ) ;
         workspace.reloadWorkspace(index);
     }
         
     public void handleSaveAsCodeRequest() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        Workspace workspace = (Workspace) app.getWorkspaceComponent();
+        workspace.reloadWorkspace(index);
+        Pane pane = workspace.getLeftPane();
+        for(int i = 0; i < pane.getChildren().size(); i++) {
+            if(pane.getChildren().get(i) instanceof Diagram) {
+                Diagram diagram = (Diagram) pane.getChildren().get(i);
+                String path = "work" + File.separator + "ExportedProject" + File.separator + "src"
+                        + (diagram.getPackageName().isEmpty() ? "" : File.separator + diagram.getPackageName())
+                        + File.separator + diagram.getNameText().getText() + ".java";
+                File file = new File(path);
+                file.getParentFile().mkdirs(); 
+                try {
+                    file.createNewFile();
+                } catch (IOException ex) {
+                    Logger.getLogger(PageEditController.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                PrintWriter writer;
+                try {
+                    writer = new PrintWriter(path, "UTF-8");
+                    writer.println("public " + (diagram.isInterface() ? "interface " : "class ") + diagram.getNameText().getText() + 
+                            (diagram.getParentId() == -1 ? "{" : " extends " + findDiagramName(diagram.getParentId()) + "{"));
+                    for(Variable variable : diagram.getVariableData()) {
+                        writer.println("\t" + variable.toString() + ";");
+                    }
+                    for(Method method : diagram.getMethodData()) {
+                        writer.println("\t" + method.toString() + "{\n\t" +
+                                (method.getReturnType().isEmpty() ? "" : "return ") + "\n\t}");
+                    }
+                    writer.print("}");
+                    writer.close();
+                } catch (FileNotFoundException | UnsupportedEncodingException ex) {
+                    Logger.getLogger(PageEditController.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        }
     }
 
     public void handleAddInterfaceRequest() {
@@ -86,9 +128,11 @@ public class PageEditController {
         Pane pane = workspace.getLeftPane();
         pane.setCursor(Cursor.CROSSHAIR);
         pane.setOnMousePressed((MouseEvent event) -> {
-            diagram = new Diagram(-1, event.getX(), event.getY(), "", "", true, "", "", "", -1);
+            diagram = new Diagram(-1, event.getX(), event.getY(), "", "", true, FXCollections.observableArrayList(), FXCollections.observableArrayList(), -1);
+            diagram.setStroke(Color.BLACK);
             diagram.setFill(Color.web("#e0eae1"));
             diagram.dynamicPosition();
+            Diagram.setIdCounter(Diagram.getIdCounter() + 1);
             pane.getChildren().add(diagram);
         } ) ;
         workspace.reloadWorkspace(index);
@@ -195,7 +239,7 @@ public class PageEditController {
                 diagram = (Diagram)pane.getChildren().get(index);
                 diagram.setStroke(Color.BLUE);
                 workspace.getNameTextField().setText(diagram.getNameText().getText());
-                workspace.getPackageTextField().setText(diagram.getPackageText());
+                workspace.getPackageTextField().setText(diagram.getPackageName());
                 workspace.getParentComboBox().setValue(findDiagramName(diagram.getParentId()));
 //                workspace.getremoveButton().setDisable(false);
 //                workspace.getDownButton().setDisable(false);
@@ -284,7 +328,6 @@ public class PageEditController {
         Pane pane = workspace.getLeftPane();
         if (index != -1){
             diagram = (Diagram)pane.getChildren().get(index);
-            diagram.setParentName(parentName);
             diagram.setParentId(findDiagramId(parentName));
         }
 

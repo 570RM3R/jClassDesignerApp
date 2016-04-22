@@ -37,11 +37,11 @@ public class Method {
         return returnType;
     }
     
-    public boolean getStatic() {
+    public boolean isStatic() {
         return isStatic;
     }
     
-    public boolean getAbstract() {
+    public boolean isAbstract() {
         return isAbstract;
     }
     

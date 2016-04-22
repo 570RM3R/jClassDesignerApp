@@ -30,7 +30,7 @@ public class Variable {
         return typeName;
     }
     
-    public boolean getStatic() {
+    public boolean isStatic() {
         return isStatic;
     }
     

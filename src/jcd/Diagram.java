@@ -4,7 +4,6 @@
  * and open the template in the editor.
  */
 package jcd;
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Parent;
 import javafx.scene.paint.Color;
@@ -29,36 +28,29 @@ public class Diagram extends Parent{
     Text interfaceText;
     ObservableList<Variable> variableData;
     ObservableList<Method> methodData;
-    String parentName;
     int parentId;
     
-    public Diagram(int diagramId, double x, double y, String nameString, String packageName, boolean isInterface, String variableString, String methodString, String parentName, int parentId) {
+    public Diagram(int diagramId, double x, double y, String nameString, String packageName, boolean isInterface, ObservableList<Variable> variableData, ObservableList<Method> methodData, int parentId) {
         this.diagramId = diagramId == -1 ? Diagram.idCounter : diagramId;
         nameSection = new Rectangle(125, 30);
-        nameSection.setStroke(Color.BLACK);
         nameSection.setX(x - 62.5);
         nameSection.setY(y - 15);
         nameText = new Text(nameString);
+        interfaceText = new Text();
         if(isInterface) {
-            interfaceText = new Text("<<Interface>>");
+            interfaceText.setText("<<Interface>>");
             nameSection.setHeight(45.4);
-            getChildren().addAll(nameSection, interfaceText, nameText);
         }
-        else {
-            getChildren().addAll(nameSection, nameText);
-            variableData = FXCollections.observableArrayList();
-        }
+        this.variableData = variableData;
         this.packageName = packageName;
         this.isInterface = isInterface;
         variableSection = new Rectangle();
-        variableText = new Text(variableString);
+        variableText = new Text();
         methodSection = new Rectangle();
-        methodText = new Text(methodString);
-        methodData = FXCollections.observableArrayList();
-        getChildren().addAll(variableSection, variableText, methodSection, methodText);
-        this.parentName = parentName;
+        methodText = new Text();
+        this.methodData = methodData;
+        getChildren().addAll(nameSection, interfaceText, nameText, variableSection, variableText, methodSection, methodText);
         this.parentId = parentId;
-        idCounter++;
     }
     
     public int getDiagramId(){
@@ -89,7 +81,7 @@ public class Diagram extends Parent{
         return methodText;
     }
     
-    public String getPackageText() {
+    public String getPackageName() {
         return packageName;
     }
     
@@ -101,16 +93,20 @@ public class Diagram extends Parent{
         return interfaceText;
     }
     
-    public String getParentName() {
-        return parentName;
-    }
-    
     public int getParentId(){
         return parentId;
     }
     
     public static int getIdCounter() {
-        return idCounter; //To change body of generated methods, choose Tools | Templates.
+        return idCounter;
+    }
+    
+    public ObservableList<Variable> getVariableData() {
+        return variableData;
+    }
+    
+    public ObservableList<Method> getMethodData() {
+        return methodData;
     }
     
     public void setPackageName(String packageName) {
@@ -121,16 +117,12 @@ public class Diagram extends Parent{
         this.parentId = parentId;
     }
     
-    public void setParentName(String parentName) {
-        this.parentName = parentName;
-    }
-    
     public static void setIdCounter(int idCounter) {
         Diagram.idCounter = idCounter;
     }
     
     public void addVariable(Variable newVariable) {
-        if(!isInterface) {
+        if(!isInterface && isValidVariable(newVariable)) {
             variableData.add(newVariable);
             variableText.setText(variableText.getText() + "\n" + newVariable.toString());
             dynamicResize();
@@ -139,10 +131,12 @@ public class Diagram extends Parent{
     }
     
     public void addMethod(Method newMethod) {
-        methodData.add(newMethod);
-        methodText.setText(methodText.getText() + "\n" + newMethod.toString());
-        dynamicResize();
-        dynamicPosition();
+        if(isValidMethod(newMethod)) {
+            methodData.add(newMethod);
+            methodText.setText(methodText.getText() + "\n" + newMethod.toString());
+            dynamicResize();
+            dynamicPosition();
+        }
     }
     
     
@@ -195,14 +189,14 @@ public class Diagram extends Parent{
     
     public void updateVariableText() {
         for(int i = 0; i < variableData.size(); i++) {
-            variableText.setText("\n" + variableData.get(i).toString());
+            variableText.setText(variableText.getText() + "\n" + variableData.get(i).toString());
         }
         dynamicResize();
     }
     
     public void updateMethodText() {
         for(int i = 0; i < methodData.size(); i++) {
-            methodText.setText("\n" + methodData.get(i).toString());
+            methodText.setText(methodText.getText() + "\n" + methodData.get(i).toString());
         }
         dynamicResize();
     }
@@ -242,5 +236,18 @@ public class Diagram extends Parent{
         nameSection.setFill(color);
         variableSection.setFill(color);
         methodSection.setFill(color);
+    }
+    
+    public boolean isValidVariable(Variable newVariable) {
+        for(Variable variable: variableData) {
+            if(variable.getVariableName().equals(newVariable.getVariableName())) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    public boolean isValidMethod(Method newMethod) {
+        return true;
     }
 }

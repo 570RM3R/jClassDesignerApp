@@ -144,11 +144,11 @@ public class Workspace extends AppWorkspaceComponent {
         
         // THESE ARE THE MAIN TWO PANES OF THE APPLICATION
         leftPane = new Pane();
-        leftPane.setMinSize(1070, 800);
-        leftPane.setMaxSize(1070, 800);
+        leftPane.setMinSize(1060, 800);
+        leftPane.setMaxSize(1060, 800);
         rightPane = new VBox(20);
         rightPane.setPadding(new Insets(8, 12, 8, 12));
-        rightPane.setMaxWidth(360);
+        rightPane.setMaxWidth(370);
         rightPane.setMinHeight(800);
         
         accessOption = FXCollections.observableArrayList("public", "protected", "<no modifier>", "private");
