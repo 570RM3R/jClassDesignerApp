@@ -54,8 +54,26 @@ public class Variable {
         this.accessType = accessType;
     }
     
+    public String exportString() {
+        return accessType + (isStatic ? " static " : " ") + typeName + " " + variableName;
+    }
+    
     @Override
     public String toString() {
-        return accessType + (isStatic ? " static " : " ") + typeName + " " + variableName;
+        String variableString = "";
+        if(accessType.equals("public")) {
+            variableString += "+ ";
+        }
+        else if(accessType.equals("private")) {
+            variableString += "- ";
+        }
+        else if(accessType.equals("protected")) {
+            variableString += "# ";
+        }
+        if(isStatic) {
+            variableString += "$ ";
+        }
+        variableString += variableName + " : " + typeName;
+        return variableString;
     }
 }

@@ -18,7 +18,8 @@ public class Method {
     String argumentTwo;
     String argumentThree;
     
-    public Method(String methodName, String returnType, boolean isStatic, boolean isAbstract, String accessType, String argumentOne, String argumentTwo, String argumentThree) {
+    public Method(String methodName, String returnType, boolean isStatic, boolean isAbstract,
+            String accessType, String argumentOne, String argumentTwo, String argumentThree) {
         this.methodName = methodName;
         this.returnType = returnType;
         this.isStatic = isStatic;
@@ -93,8 +94,49 @@ public class Method {
         this.argumentThree = argumentThree;
     }
     
+    public String exportString() {
+        return accessType + (isStatic ? " static " : ("" + (isAbstract ? " abstract " : ""))) + " " +
+                returnType + " " + methodName + "(" + argumentOne + (argumentTwo.equals("") ? "" : ", " + argumentTwo) + 
+                (argumentThree.equals("") ? "" : ", " + argumentThree) + ")" ;
+    }
+    
+    
     @Override
     public String toString() {
-        return accessType + (isStatic ? " static " : (" " + (isAbstract ? " abstract " : " "))) + returnType + " " + methodName + "(" + argumentOne + (argumentTwo.equals("") ? "" : ", " + argumentTwo) + (argumentThree.equals("") ? "" : ", " + argumentThree + ")");
+        String methodString = "";
+        if(accessType.equals("public")) {
+            methodString += "+ ";
+        }
+        else if(accessType.equals("private")) {
+            methodString += "- ";
+        }
+        else if(accessType.equals("protected")) {
+            methodString += "# ";
+        }
+        if(isStatic) {
+            methodString += "$ ";
+        }
+        else if(isAbstract) {
+            methodString += "{abstract} ";
+        }
+        methodString += methodName + " (";
+        if(!argumentOne.isEmpty()) {
+            String argumentArray[] = argumentOne.split(" ");
+            methodString += argumentArray[1] + " : " + argumentArray[0];
+        }
+        if(!argumentTwo.isEmpty()) {
+            String argumentArray[] = argumentTwo.split(" ");
+            methodString += ", " + argumentArray[1] + " : " + argumentArray[0];
+        }
+        if(!argumentThree.isEmpty()) {
+            String argumentArray[] = argumentThree.split(" ");
+            methodString += ", " + argumentArray[1] + " : " + argumentArray[0];
+        }
+        methodString += ")";
+        if(!returnType.isEmpty()) {
+            methodString +=  ": " + returnType;
+        }
+        
+        return methodString;
     }
 }

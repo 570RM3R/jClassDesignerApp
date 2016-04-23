@@ -4,6 +4,8 @@
  * and open the template in the editor.
  */
 package jcd;
+import java.util.ArrayList;
+import java.util.List;
 import javafx.collections.ObservableList;
 import javafx.scene.Parent;
 import javafx.scene.paint.Color;
@@ -17,6 +19,8 @@ import javafx.scene.text.Text;
 public class Diagram extends Parent{
     static int idCounter = 0;
     int diagramId;
+    double width;
+    double height;
     Rectangle nameSection;
     Rectangle variableSection;
     Rectangle methodSection;
@@ -25,36 +29,57 @@ public class Diagram extends Parent{
     Text methodText;
     String packageName;
     boolean isInterface;
-    Text interfaceText;
+    boolean isAbstract;
+    Text headingText;
     ObservableList<Variable> variableData;
     ObservableList<Method> methodData;
     int parentId;
+    int aggregateId;
+    int relationshipId;
+    ArrayList<List<Double>> pointData;
     
-    public Diagram(int diagramId, double x, double y, String nameString, String packageName, boolean isInterface, ObservableList<Variable> variableData, ObservableList<Method> methodData, int parentId) {
+    public Diagram(int diagramId, double x, double y, double width, double height, String nameString, String packageName,boolean isInterface, 
+            boolean isAbstract, ObservableList<Variable> variableData, ObservableList<Method> methodData, int parentId, ArrayList<List<Double>> pointData) {
         this.diagramId = diagramId == -1 ? Diagram.idCounter : diagramId;
         nameSection = new Rectangle(125, 30);
         nameSection.setX(x - 62.5);
         nameSection.setY(y - 15);
+        this.width = width;
+        this.height = height;
         nameText = new Text(nameString);
-        interfaceText = new Text();
+        headingText = new Text();
         if(isInterface) {
-            interfaceText.setText("<<Interface>>");
+            headingText.setText("<<Interface>>");
+            nameSection.setHeight(45.4);
+        }
+        else if(isAbstract){
+            headingText.setText("{abstract}");
             nameSection.setHeight(45.4);
         }
         this.variableData = variableData;
         this.packageName = packageName;
+        this.isAbstract = isAbstract;
         this.isInterface = isInterface;
         variableSection = new Rectangle();
         variableText = new Text();
         methodSection = new Rectangle();
         methodText = new Text();
         this.methodData = methodData;
-        getChildren().addAll(nameSection, interfaceText, nameText, variableSection, variableText, methodSection, methodText);
+        getChildren().addAll(nameSection, headingText, nameText, variableSection, variableText, methodSection, methodText);
         this.parentId = parentId;
+        this.pointData = pointData;
     }
     
     public int getDiagramId(){
         return diagramId;
+    }
+    
+    public double getDiagramWidth() {
+        return nameSection.getWidth() + variableSection.getWidth() + methodSection.getWidth();
+    }
+    
+    public double getDiagramHeight() {
+        return nameSection.getHeight() + variableSection.getHeight() + methodSection.getHeight();
     }
     
     public Rectangle getNameSection() {
@@ -89,8 +114,12 @@ public class Diagram extends Parent{
         return isInterface;
     }
     
-    public Text getInterfaceText() {
-        return interfaceText;
+    public boolean isAbstract() {
+        return isAbstract;
+    }
+    
+    public Text getHeadingText() {
+        return headingText;
     }
     
     public int getParentId(){
@@ -107,6 +136,10 @@ public class Diagram extends Parent{
     
     public ObservableList<Method> getMethodData() {
         return methodData;
+    }
+    
+    public ArrayList<List<Double>> getPointData() {
+        return pointData;
     }
     
     public void setPackageName(String packageName) {
@@ -143,9 +176,9 @@ public class Diagram extends Parent{
     public void dynamicPosition() {
         nameText.setX(nameSection.getX() + 6);
         nameText.setY(nameSection.getY() + 19);
-        if(isInterface()) {
-            interfaceText.setX(nameSection.getX() + 6);
-            interfaceText.setY(nameSection.getY() + 18);
+        if(isInterface || isAbstract) {
+            headingText.setX(nameSection.getX() + 6);
+            headingText.setY(nameSection.getY() + 18);
             nameText.setX(nameSection.getX() + 6);
             nameText.setY(nameSection.getY() + 36.4);
         }
@@ -212,9 +245,9 @@ public class Diagram extends Parent{
         nameSection.setLayoutY(LayoutY);
         nameText.setLayoutX(LayoutX);
         nameText.setLayoutY(LayoutY);
-        if(isInterface()) {
-            interfaceText.setLayoutX(LayoutX);
-            interfaceText.setLayoutY(LayoutY);
+        if(isInterface || isAbstract) {
+            headingText.setLayoutX(LayoutX);
+            headingText.setLayoutY(LayoutY);
         }
         variableSection.setLayoutX(LayoutX);
         variableSection.setLayoutY(LayoutY);
@@ -249,5 +282,51 @@ public class Diagram extends Parent{
     
     public boolean isValidMethod(Method newMethod) {
         return true;
+    }
+    
+    @Override
+    public String toString() {
+        String diagramString = "";
+        diagramString += "Diagram ID: " + diagramId + "\nDiagram Position: (" + nameSection.getX() + ", " + nameSection.getY() + 
+                ")\nName: " + nameText.getText() + "\nPackage Name: " + packageName + "\nIs Interface: " + 
+                (isInterface ? "Yes" : "No") + "\nIs Abstract: " + (isAbstract ? "Yes\n\nVariables:\n" : "No\n\nVariables:\n");
+        
+        if(variableData.isEmpty()) {
+            diagramString += "No variables\n";
+        }
+        else {
+            for(Variable variable: variableData){
+                diagramString += variable.exportString() + "\n";
+            }
+        }
+        
+        diagramString += "\nMethods:\n";
+        
+        if(methodData.isEmpty()) {
+            diagramString += "No methods\n";
+        }
+        else {
+            for(Method method: methodData){
+                diagramString += method.exportString() + "\n";
+            }
+        }
+        
+        diagramString += "\nPoints:\n";
+        if(pointData.isEmpty()) {
+            diagramString += "No points\n";
+        }
+        else {
+            diagramString += "[" + pointData.get(0);
+            for(int i = 1; i < pointData.size(); i++){
+                diagramString += "{" + pointData.get(i).get(0);
+                for(int j = 1; j < pointData.get(i).size(); j++) {
+                    diagramString += ", " + pointData.get(i).get(j);
+                }
+                diagramString += "}";
+            }
+            diagramString += "]";
+        }
+        diagramString += "\n\n";
+        return diagramString;
     }
 }

@@ -17,8 +17,8 @@ public class Connector extends Parent{
     Polyline line;
     Polygon head;
     
-    public Connector(int type, double startX, double startY, double endX, double endY) {
-        line = new Polyline(0.0, 0.0, 20.0, 10.0, 10.0, 20.0);
+    public Connector(int type, double[]points) {
+        line = new Polyline(points);
         if(type == 1) {
             head = new Polygon(0.0, 0.0, 20.0, 10.0, 10.0, 20.0);
             head.setFill(null);

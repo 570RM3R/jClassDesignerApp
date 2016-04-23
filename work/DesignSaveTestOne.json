@@ -5,8 +5,8 @@
             "diagram_id":1,
             "x_coordinate":529.0,
             "y_coordinate":237.0,
-            "width":836.2998046875,
-            "height":223.7265625,
+            "width":125.0,
+            "height":30.0,
             "name_string":"ThreadExample",
             "package_name":"",
             "is_interface":0,
@@ -100,41 +100,29 @@
                 [
                     {
                         "0":1.0
-                    }
-                ],
-                [
+                    },
                     {
-                        "0":2.0
-                    }
-                ],
-                [
+                        "1":2.0
+                    },
                     {
-                        "0":3.0
-                    }
-                ],
-                [
+                        "2":3.0
+                    },
                     {
-                        "0":4.0
+                        "3":4.0
                     }
                 ],
                 [
                     {
                         "0":1.0
-                    }
-                ],
-                [
+                    },
                     {
-                        "0":2.0
-                    }
-                ],
-                [
+                        "1":2.0
+                    },
                     {
-                        "0":3.0
-                    }
-                ],
-                [
+                        "2":3.0
+                    },
                     {
-                        "0":4.0
+                        "3":4.0
                     }
                 ]
             ]
@@ -143,8 +131,8 @@
             "diagram_id":2,
             "x_coordinate":516.0,
             "y_coordinate":75.0,
-            "width":560.9609375,
-            "height":81.02109375,
+            "width":125.0,
+            "height":45.4,
             "name_string":"Application",
             "package_name":"",
             "is_interface":0,
@@ -261,8 +249,8 @@
             "diagram_id":8,
             "x_coordinate":199.0,
             "y_coordinate":225.0,
-            "width":795.7001953125,
-            "height":131.86328125,
+            "width":125.0,
+            "height":30.0,
             "name_string":"CounterTask",
             "package_name":"",
             "is_interface":0,
@@ -329,8 +317,8 @@
             "diagram_id":10,
             "x_coordinate":208.0,
             "y_coordinate":375.0,
-            "width":734.19140625,
-            "height":131.86328125,
+            "width":125.0,
+            "height":30.0,
             "name_string":"DateTask",
             "package_name":"",
             "is_interface":0,
@@ -397,8 +385,8 @@
             "diagram_id":12,
             "x_coordinate":829.0,
             "y_coordinate":247.0,
-            "width":815.98095703125,
-            "height":116.552734375,
+            "width":125.0,
+            "height":30.0,
             "name_string":"PauseHandler",
             "package_name":"",
             "is_interface":0,
@@ -441,8 +429,8 @@
             "diagram_id":13,
             "x_coordinate":826.0,
             "y_coordinate":396.0,
-            "width":793.77685546875,
-            "height":116.552734375,
+            "width":125.0,
+            "height":30.0,
             "name_string":"StartHandler",
             "package_name":"",
             "is_interface":0,
@@ -475,34 +463,6 @@
                     "argument_one":"Event event",
                     "argument_two":"",
                     "argument_three":""
-                }
-            ],
-            "parent_id":-1,
-            "line_data":[
-            ]
-        },
-        {
-            "diagram_id":14,
-            "x_coordinate":144.0,
-            "y_coordinate":63.0,
-            "width":504.1875,
-            "height":81.02109375,
-            "name_string":"newAbstractClass",
-            "package_name":"",
-            "is_interface":0,
-            "is_abstract":1,
-            "variable_data":[
-            ],
-            "method_data":[
-                {
-                    "method_name":"add",
-                    "return_type":"int",
-                    "is_static":0,
-                    "is_abstract":1,
-                    "access_type":"",
-                    "argument_one":"int x",
-                    "argument_two":"int y",
-                    "argument_three":"int z"
                 }
             ],
             "parent_id":-1,

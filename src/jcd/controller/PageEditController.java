@@ -10,6 +10,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.collections.FXCollections;
@@ -21,6 +22,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javax.imageio.ImageIO;
+import org.apache.commons.io.FileUtils;
 import jcd.Diagram;
 import jcd.Method;
 import jcd.Variable;
@@ -74,7 +76,8 @@ public class PageEditController {
         Pane pane = workspace.getLeftPane();
         pane.setCursor(Cursor.CROSSHAIR);
         pane.setOnMousePressed((MouseEvent event) -> {
-            diagram = new Diagram(-1, event.getX(), event.getY(), "", "", false, FXCollections.observableArrayList(), FXCollections.observableArrayList(), -1);
+            diagram = new Diagram(-1, event.getX(), event.getY(), -1, -1, "", "", false, false,
+                    FXCollections.observableArrayList(), FXCollections.observableArrayList(), -1, new ArrayList<>());
             diagram.setStroke(Color.BLACK);
             diagram.setFill(Color.web("#e0eae1"));
             diagram.dynamicPosition();
@@ -88,13 +91,25 @@ public class PageEditController {
         Workspace workspace = (Workspace) app.getWorkspaceComponent();
         workspace.reloadWorkspace(index);
         Pane pane = workspace.getLeftPane();
+        String folderPath = "work" + File.separator + "ExportedProject" + File.separator + "src";
+        FileUtils fileutils = new FileUtils();
+        try {
+            fileutils.cleanDirectory(new File(folderPath));
+        } catch (IOException ex) {
+            Logger.getLogger(PageEditController.class.getName()).log(Level.SEVERE, null, ex);
+        }
         for(int i = 0; i < pane.getChildren().size(); i++) {
+            String packagePath = folderPath;
             if(pane.getChildren().get(i) instanceof Diagram) {
                 Diagram diagram = (Diagram) pane.getChildren().get(i);
-                String path = "work" + File.separator + "ExportedProject" + File.separator + "src"
-                        + (diagram.getPackageName().isEmpty() ? "" : File.separator + diagram.getPackageName())
-                        + File.separator + diagram.getNameText().getText() + ".java";
-                File file = new File(path);
+                if(!diagram.getPackageName().isEmpty()) {
+                    String packageToken[] = diagram.getPackageName().split("\\.");
+                    for(String token : packageToken) {
+                        packagePath += File.separator + token;
+                    }
+                }
+                String filePath = packagePath + File.separator + diagram.getNameText().getText() + ".java";
+                File file = new File(filePath);
                 file.getParentFile().mkdirs(); 
                 try {
                     file.createNewFile();
@@ -103,15 +118,71 @@ public class PageEditController {
                 }
                 PrintWriter writer;
                 try {
-                    writer = new PrintWriter(path, "UTF-8");
-                    writer.println("public " + (diagram.isInterface() ? "interface " : "class ") + diagram.getNameText().getText() + 
-                            (diagram.getParentId() == -1 ? "{" : " extends " + findDiagramName(diagram.getParentId()) + "{"));
+                    writer = new PrintWriter(filePath, "UTF-8");
+                    if(!diagram.getPackageName().isEmpty())
+                        writer.println("package " + diagram.getPackageName() + ";\n");
+                    writer.println("public " + (diagram.isAbstract() ? "abstract " : "") + (diagram.isInterface() ? "interface " : "class ") + diagram.getNameText().getText() + 
+                            (diagram.getParentId() == -1 ? " {" : " extends " + findDiagramName(diagram.getParentId()) + " {"));
                     for(Variable variable : diagram.getVariableData()) {
-                        writer.println("\t" + variable.toString() + ";");
+                        writer.println("\t" + variable.exportString() + ";");
                     }
+                    writer.println();
                     for(Method method : diagram.getMethodData()) {
-                        writer.println("\t" + method.toString() + "{\n\t" +
-                                (method.getReturnType().isEmpty() ? "" : "return ") + "\n\t}");
+                        writer.println("\t" + method.exportString() + (method.isAbstract() ? "" : " {"));
+                        if(!isPrimitive(method.getArgumentOne().split(" ")[0])) {
+                            String newFilePath = packagePath + File.separator + method.getArgumentOne().split(" ")[0] + ".java";
+                            File newfile = new File(newFilePath);
+                            newfile.getParentFile().mkdirs();
+                            PrintWriter newWriter = new PrintWriter(newFilePath, "UTF-8");
+                            newWriter.println((diagram.getPackageName().isEmpty() ? "" : "package " + diagram.getPackageName() + ";") + "\n\npublic class " + method.getArgumentOne().split(" ")[0] +
+                                    " extends Object{\n\tpublic " + method.getArgumentOne().split(" ")[0] + "(){}"+"\n}");
+                            newWriter.close();
+                        }
+                        if(!isPrimitive(method.getArgumentTwo().split(" ")[0])) {
+                            String newFilePath = packagePath + File.separator + method.getArgumentTwo().split(" ")[0] + ".java";
+                            File newfile = new File(newFilePath);
+                            newfile.getParentFile().mkdirs();
+                            PrintWriter newWriter = new PrintWriter(newFilePath, "UTF-8");
+                            newWriter.println((diagram.getPackageName().isEmpty() ? "" : "package " + diagram.getPackageName() + ";") + "\n\npublic class " + method.getArgumentTwo().split(" ")[0] +
+                                    " extends Object{\n\tpublic " + method.getArgumentTwo().split(" ")[0] + "(){}"+"\n}");
+                            newWriter.close();
+                        }
+                        if(!isPrimitive(method.getArgumentThree().split(" ")[0])) {
+                            String newFilePath = packagePath + File.separator + method.getArgumentThree().split(" ")[0] + ".java";
+                            File newfile = new File(newFilePath);
+                            newfile.getParentFile().mkdirs();
+                            PrintWriter newWriter = new PrintWriter(newFilePath, "UTF-8");
+                            newWriter.println((diagram.getPackageName().isEmpty() ? "" : "package " + diagram.getPackageName() + ";") + "\n\npublic class " + method.getArgumentThree().split(" ")[0] +
+                                    " extends Object{\n\tpublic " + method.getArgumentThree().split(" ")[0] + "(){}"+"\n}");
+                            newWriter.close();
+                        }
+                        if(!method.getReturnType().isEmpty()) {
+                            if(method.getReturnType().equals("byte") || method.getReturnType().equals("short")
+                                || method.getReturnType().equals("int") || method.getReturnType().equals("long")
+                                || method.getReturnType().equals("float") || method.getReturnType().equals("double")) {
+                                writer.println("\t\t" + method.getReturnType() + " returnedObject = 0;\n\t\treturn returnedObject;");
+                            }
+                            else if(method.getReturnType().equals("char")) {
+                                writer.println("int returnedObject = 'a'\n\t\treturn returnedObject;");     
+                            }
+                            else if(method.getReturnType().equals("boolean")) {
+                                writer.println("\t\treturn true;");
+                            }
+                            else if(method.getReturnType().equals("String")) {
+                                writer.println("\t\treturn \"\";");
+                            }
+                            else if(!method.getReturnType().equals("void")) {
+                                writer.println("\t\treturn new " + method.getReturnType() + "();");
+                                String newFilePath = packagePath + File.separator + method.getReturnType() + ".java";
+                                File newfile = new File(newFilePath);
+                                newfile.getParentFile().mkdirs();
+                                PrintWriter newWriter = new PrintWriter(newFilePath, "UTF-8");
+                                newWriter.println((diagram.getPackageName().isEmpty() ? "" : "package " + diagram.getPackageName() + ";") + "\n\npublic class " + method.getReturnType() +
+                                        " extends Object{\n\tpublic " + method.getReturnType() + "(){}"+"\n}");
+                                newWriter.close();
+                            }
+                        }
+                        writer.println(method.isAbstract() ? ";" :"\t}");
                     }
                     writer.print("}");
                     writer.close();
@@ -128,7 +199,8 @@ public class PageEditController {
         Pane pane = workspace.getLeftPane();
         pane.setCursor(Cursor.CROSSHAIR);
         pane.setOnMousePressed((MouseEvent event) -> {
-            diagram = new Diagram(-1, event.getX(), event.getY(), "", "", true, FXCollections.observableArrayList(), FXCollections.observableArrayList(), -1);
+            diagram = new Diagram(-1, event.getX(), event.getY(), -1, -1, "", "", true, false,
+                    FXCollections.observableArrayList(), FXCollections.observableArrayList(), -1, new ArrayList<>());
             diagram.setStroke(Color.BLACK);
             diagram.setFill(Color.web("#e0eae1"));
             diagram.dynamicPosition();
@@ -291,7 +363,7 @@ public class PageEditController {
         Pane pane = workspace.getLeftPane();
         if (index != -1){
             diagram = (Diagram)pane.getChildren().get(index);
-            diagram.addMethod(new Method("newMethodLaLaLa", "int" , true , true, "private" , "int x", "int y", "int z"));
+            diagram.addMethod(new Method("newMethodLaLaLa", "Zinga" , false , true, "public" , "int x", "int y", "int z"));
         }
     }
 
@@ -356,4 +428,14 @@ public class PageEditController {
         }
         return -1;
     }
+    
+    public boolean isPrimitive(String className) {
+        String[] primitiveClass = {"byte", "short", "int", "long", "float", "double", "char", "boolean", "String"};
+        for(int i = 0; i < primitiveClass.length; i++) {
+            if(className.equals(primitiveClass[i]))
+                return true;
+        }
+        return false;
+    }
+
 }

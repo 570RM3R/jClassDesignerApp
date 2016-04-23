@@ -12,7 +12,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -42,6 +45,8 @@ import paf.components.AppFileComponent;
  * @version 1.0
  */
 public class FileManager implements AppFileComponent {
+    
+    public FileManager(){}
         
     public static final String JSON_FILE = "data.json";
     public static final String PATH_TEMP = "./temp/";
@@ -51,6 +56,8 @@ public class FileManager implements AppFileComponent {
     public static final String JSON_DIAGRAM_ID = "diagram_id";
     public static final String JSON_X_COORDINATE = "x_coordinate";
     public static final String JSON_Y_COORDINATE = "y_coordinate";
+    public static final String JSON_WIDTH = "width";
+    public static final String JSON_HEIGHT = "height";
     public static final String JSON_NAME_STRING = "name_string";
     public static final String JSON_IS_INTERFACE = "is_interface";
     public static final String JSON_PACKAGE_NAME = "package_name";
@@ -67,6 +74,7 @@ public class FileManager implements AppFileComponent {
     public static final String JSON_ARGUMENT_ONE = "argument_one";
     public static final String JSON_ARGUMENT_TWO = "argument_two";
     public static final String JSON_ARGUMENT_THREE = "argument_three";
+    public static final String JSON_LINE_DATA = "line_data";
 
     /**
      * This method is for saving user work, which in the case of this
@@ -118,7 +126,40 @@ public class FileManager implements AppFileComponent {
 	PrintWriter pw = new PrintWriter(filePath);
 	pw.write(prettyPrinted);
 	pw.close();
+    }
+    
+    public void saveDataTest (ObservableList<Diagram> diagramData, String filePath) throws IOException {
+        StringWriter sw = new StringWriter();
+	// THEN THE TREE
+	JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
+        for (int i = 0; i < diagramData.size(); i++) {
+            JsonObject diagram = makeDiagramJsonObject((Diagram)diagramData.get(i));
+            arrayBuilder.add(diagram);
+        } 
+	JsonArray nodesArray = arrayBuilder.build();
+	
+	// THEN PUT IT ALL TOGETHER IN A JsonObject
+	JsonObject dataManagerJSO = Json.createObjectBuilder()
+		.add(JSON_DIAGRAM_COLLECTION, nodesArray)
+                .add(JSON_ID_COUNTER, Diagram.getIdCounter())
+		.build();
+	
+	// AND NOW OUTPUT IT TO A JSON FILE WITH PRETTY PRINTING
+	Map<String, Object> properties = new HashMap<>(1);
+	properties.put(JsonGenerator.PRETTY_PRINTING, true);
+	JsonWriterFactory writerFactory = Json.createWriterFactory(properties);
+	JsonWriter jsonWriter = writerFactory.createWriter(sw);
+	jsonWriter.writeObject(dataManagerJSO);
+	jsonWriter.close();
 
+	// INIT THE WRITER
+	OutputStream os = new FileOutputStream(filePath);
+	JsonWriter jsonFileWriter = Json.createWriter(os);
+	jsonFileWriter.writeObject(dataManagerJSO);
+	String prettyPrinted = sw.toString();
+	PrintWriter pw = new PrintWriter(filePath);
+	pw.write(prettyPrinted);
+	pw.close();
     }
     
     // HELPER METHOD FOR SAVING DATA TO A JSON FORMAT
@@ -127,12 +168,16 @@ public class FileManager implements AppFileComponent {
 		.add(JSON_DIAGRAM_ID, diagram.getDiagramId())
 		.add(JSON_X_COORDINATE, diagram.getNameSection().getX() + 62.5)
 		.add(JSON_Y_COORDINATE, diagram.getNameSection().getY() + 15)
+                .add(JSON_WIDTH, diagram.getDiagramWidth())
+                .add(JSON_HEIGHT, diagram.getDiagramHeight())
 		.add(JSON_NAME_STRING, diagram.getNameText().getText())
                 .add(JSON_PACKAGE_NAME, diagram.getPackageName())
 		.add(JSON_IS_INTERFACE, diagram.isInterface() ? 1 : 0)
+                .add(JSON_IS_ABSTRACT, diagram.isAbstract()? 1 : 0)
                 .add(JSON_VARIABLE_DATA, buildVariableJsonArray(diagram.getVariableData()))
 		.add(JSON_METHOD_DATA, buildMethodJsonArray(diagram.getMethodData()))
                 .add(JSON_PARENT_ID, diagram.getParentId())
+                .add(JSON_LINE_DATA, buildPointJsonArray(diagram.getPointData()))
 		.build();
 	return jsonDiagram;
     }
@@ -156,7 +201,7 @@ public class FileManager implements AppFileComponent {
     private JsonArray buildMethodJsonArray(ObservableList<Method> methodData) {
         JsonArrayBuilder methodArray = Json.createArrayBuilder();
         for (Method method : methodData) {
-            JsonObject jsonVariable = Json.createObjectBuilder()
+            JsonObject jsonMethod = Json.createObjectBuilder()
 		.add(JSON_METHOD_NAME, method.getMethodName())
 		.add(JSON_RETURN_TYPE, method.getReturnType())
 		.add(JSON_IS_STATIC, method.isStatic() ? 1 : 0)
@@ -166,9 +211,24 @@ public class FileManager implements AppFileComponent {
                 .add(JSON_ARGUMENT_TWO, method.getArgumentTwo())
                 .add(JSON_ARGUMENT_THREE, method.getArgumentThree())
 		.build();
-           methodArray.add(jsonVariable);
+           methodArray.add(jsonMethod);
         }
         return methodArray.build();
+    }
+    
+    private JsonArray buildPointJsonArray(ArrayList<List<Double>> pointData) {
+        JsonArrayBuilder lineArray = Json.createArrayBuilder();
+        for(int i = 0; i < pointData.size(); i++) {
+            JsonArrayBuilder pointArray = Json.createArrayBuilder();
+            for(int j = 0; j < pointData.get(i).size(); j++) {
+                JsonObject jsonPoint = Json.createObjectBuilder()
+                    .add(Integer.toString(j), pointData.get(i).get(j))
+                    .build();
+                pointArray.add(jsonPoint);
+            }
+            lineArray.add(pointArray.build());
+        }
+        return lineArray.build();
     }
     
     /**
@@ -201,6 +261,17 @@ public class FileManager implements AppFileComponent {
 	JsonArray jsonPoseArray = json.getJsonArray(JSON_DIAGRAM_COLLECTION);
 	loadDiagramObjects(jsonPoseArray, dataManager);
     }
+    
+        public ObservableList<Diagram> loadDataTest(String filePath) throws IOException {
+	// LOAD THE JSON FILE WITH ALL THE DATA
+	JsonObject json = loadJSONFile(filePath);
+        
+        Diagram.setIdCounter(json.getInt(JSON_ID_COUNTER));
+        
+	// LOAD THE TAG TREE
+	JsonArray jsonPoseArray = json.getJsonArray(JSON_DIAGRAM_COLLECTION);
+	return loadDiagramObjectsTest(jsonPoseArray);
+    }
 
     // HELPER METHOD FOR LOADING DATA FROM A JSON FORMAT
     private JsonObject loadJSONFile(String jsonFilePath) throws IOException {
@@ -224,17 +295,32 @@ public class FileManager implements AppFileComponent {
     }
     
     // HELPER METHOD FOR LOADING DATA FROM A JSON FORMAT
+    private ObservableList<Diagram> loadDiagramObjectsTest(JsonArray jsonTagsArray) {
+        ObservableList<Diagram> diagramData = FXCollections.observableArrayList();
+	// AND NOW JUST GO THROUGH THE REST OF THE ARRAY
+	for (int i = 0; i < jsonTagsArray.size(); i++) {
+	    JsonObject jsonObject = jsonTagsArray.getJsonObject(i);
+            diagramData.add(loadDiagram(jsonObject)); 
+	}
+        return diagramData;
+    }
+    
+    // HELPER METHOD FOR LOADING DATA FROM A JSON FORMAT
     private Diagram loadDiagram(JsonObject jsonObject) {
         Diagram diagram = new Diagram(
                 jsonObject.getInt(JSON_DIAGRAM_ID),
                 jsonObject.getInt(JSON_X_COORDINATE),
                 jsonObject.getInt(JSON_Y_COORDINATE),
+                jsonObject.getInt(JSON_WIDTH),
+                jsonObject.getInt(JSON_HEIGHT),
                 jsonObject.getString(JSON_NAME_STRING),
                 jsonObject.getString(JSON_PACKAGE_NAME),
                 jsonObject.getInt(JSON_IS_INTERFACE) == 1,
+                jsonObject.getInt(JSON_IS_ABSTRACT) == 1,
                 buildVariableList(jsonObject.getJsonArray(JSON_VARIABLE_DATA)),
                 buildMethodList(jsonObject.getJsonArray(JSON_METHOD_DATA)),
-                jsonObject.getInt(JSON_PARENT_ID)
+                jsonObject.getInt(JSON_PARENT_ID),
+                buildPointList(jsonObject.getJsonArray(JSON_LINE_DATA))
             );
         diagram.updateVariableText();
         diagram.updateMethodText();
@@ -275,6 +361,18 @@ public class FileManager implements AppFileComponent {
             ));
 	}
         return methodList;
+    }
+    
+    private ArrayList<List<Double>> buildPointList(JsonArray lineArray) {
+       ArrayList<List<Double>> pointData = new ArrayList();
+        for (int i = 0; i < lineArray.size(); i++) {
+            JsonArray pointArray = (JsonArray)lineArray.get(i);
+            for(int j = 0; j < pointArray.size(); j++) {
+                JsonObject jsonObject = pointArray.getJsonObject(j);
+                pointData.add(Arrays.asList((double)jsonObject.getInt(Integer.toString(j))));
+            }
+	}
+        return pointData;
     }
     
         /**
