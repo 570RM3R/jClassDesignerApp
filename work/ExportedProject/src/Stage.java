@@ -1,3 +1,3 @@
-public class Stage {
+public class Stage extends Object{
 
 }

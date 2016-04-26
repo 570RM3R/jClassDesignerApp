@@ -1,3 +1,3 @@
-public class TextArea {
+public class TextArea extends Object{
 
 }

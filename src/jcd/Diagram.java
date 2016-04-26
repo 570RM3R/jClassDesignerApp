@@ -158,8 +158,6 @@ public class Diagram extends Parent{
         if(!isInterface && isValidVariable(newVariable)) {
             variableData.add(newVariable);
             variableText.setText(variableText.getText() + "\n" + newVariable.toString());
-            dynamicResize();
-            dynamicPosition();
         }
     }
     
@@ -167,8 +165,6 @@ public class Diagram extends Parent{
         if(isValidMethod(newMethod)) {
             methodData.add(newMethod);
             methodText.setText(methodText.getText() + "\n" + newMethod.toString());
-            dynamicResize();
-            dynamicPosition();
         }
     }
     
@@ -193,24 +189,37 @@ public class Diagram extends Parent{
     }
     
     
-    public void dynamicResize() {      
-        double maxWidth = Math.max(Math.max(nameText.getLayoutBounds().getWidth(), variableText.getLayoutBounds().getWidth()), methodText.getLayoutBounds().getWidth());      
-        if(nameSection.getWidth() - 12 <= maxWidth) {
-            nameSection.setWidth(maxWidth + 12);
-            if(!variableText.getText().isEmpty())
-                variableSection.setWidth(maxWidth + 12);
-            if(!methodText.getText().isEmpty())
-                methodSection.setWidth(maxWidth + 12);
+    public void dynamicResize() {
+        // Fix the width and height dynamically when there is no variable
+        if(variableText.getText().isEmpty()) {
+            variableSection.setWidth(0);
+            variableSection.setHeight(0);      
         }
+        // Fix the width and height dynamically when there is no method
+        if(methodText.getText().isEmpty()) {
+            methodSection.setWidth(0);
+            methodSection.setHeight(0);      
+        }
+        
+        // Calculate the max lodical width of a diagram
+        double maxWidth = Math.max(Math.max(nameText.getLayoutBounds().getWidth(), variableText.getLayoutBounds().getWidth()), methodText.getLayoutBounds().getWidth());      
+        
+        nameSection.setWidth(maxWidth + 13);
+        
+        // Fix the width and height dynamically when there are some variables
         if(!variableText.getText().isEmpty()) {
+            variableSection.setWidth(maxWidth + 13);
             variableSection.setHeight(variableText.getLayoutBounds().getHeight() + 5);
             if(!methodText.getText().isEmpty()) {
                 methodSection.setY(variableSection.getY() + variableSection.getHeight());
                 methodText.setY(methodSection.getY() + 5);
                 methodSection.setHeight(methodText.getLayoutBounds().getHeight() + 5);
             }
-        }       
+        }
+        
+        // Fix the width and height dynamically when there are some methods
         if(!methodText.getText().isEmpty()) {
+            methodSection.setWidth(maxWidth + 13);
             methodSection.setHeight(methodText.getLayoutBounds().getHeight() + 5);
             if(!variableText.getText().isEmpty()) {
                 variableSection.setHeight(variableText.getLayoutBounds().getHeight() + 5);
@@ -224,14 +233,12 @@ public class Diagram extends Parent{
         for(int i = 0; i < variableData.size(); i++) {
             variableText.setText(variableText.getText() + "\n" + variableData.get(i).toString());
         }
-        dynamicResize();
     }
     
     public void updateMethodText() {
         for(int i = 0; i < methodData.size(); i++) {
             methodText.setText(methodText.getText() + "\n" + methodData.get(i).toString());
         }
-        dynamicResize();
     }
     
     public void setStroke(Color color) {
@@ -269,6 +276,11 @@ public class Diagram extends Parent{
         nameSection.setFill(color);
         variableSection.setFill(color);
         methodSection.setFill(color);
+    }
+    
+    public void abridgeDiagram() {
+        variableText.setText(null);
+        methodText.setText(null);
     }
     
     public boolean isValidVariable(Variable newVariable) {

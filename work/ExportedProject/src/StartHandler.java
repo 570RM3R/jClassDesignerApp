@@ -1,4 +1,4 @@
-public class StartHandler {
+public class StartHandler extends Object{
 	private ThreadExample app;
 
 	public  StartHandler(ThreadExample initApp) {

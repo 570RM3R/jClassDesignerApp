@@ -1,3 +1,3 @@
-public class FlowPane {
+public class FlowPane extends Object{
 
 }

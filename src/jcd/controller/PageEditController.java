@@ -92,78 +92,55 @@ public class PageEditController {
         workspace.reloadWorkspace(index);
         Pane pane = workspace.getLeftPane();
         String folderPath = "work" + File.separator + "ExportedProject" + File.separator + "src";
-        FileUtils fileutils = new FileUtils();
+        // Clear the existing files of the folder
         try {
-            fileutils.cleanDirectory(new File(folderPath));
+            FileUtils.cleanDirectory(new File(folderPath));
         } catch (IOException ex) {
             Logger.getLogger(PageEditController.class.getName()).log(Level.SEVERE, null, ex);
         }
         for(int i = 0; i < pane.getChildren().size(); i++) {
             String packagePath = folderPath;
             if(pane.getChildren().get(i) instanceof Diagram) {
-                Diagram diagram = (Diagram) pane.getChildren().get(i);
-                if(!diagram.getPackageName().isEmpty()) {
-                    String packageToken[] = diagram.getPackageName().split("\\.");
+                Diagram tempDiagram = (Diagram) pane.getChildren().get(i);
+                // Create appropriate directory for the java source code
+                if(!tempDiagram.getPackageName().isEmpty()) {
+                    String packageToken[] = tempDiagram.getPackageName().split("\\.");
                     for(String token : packageToken) {
                         packagePath += File.separator + token;
                     }
                 }
-                String filePath = packagePath + File.separator + diagram.getNameText().getText() + ".java";
-                File file = new File(filePath);
-                file.getParentFile().mkdirs(); 
-                try {
-                    file.createNewFile();
-                } catch (IOException ex) {
-                    Logger.getLogger(PageEditController.class.getName()).log(Level.SEVERE, null, ex);
-                }
-                PrintWriter writer;
-                try {
-                    writer = new PrintWriter(filePath, "UTF-8");
-                    if(!diagram.getPackageName().isEmpty())
-                        writer.println("package " + diagram.getPackageName() + ";\n");
-                    writer.println("public " + (diagram.isAbstract() ? "abstract " : "") + (diagram.isInterface() ? "interface " : "class ") + diagram.getNameText().getText() + 
-                            (diagram.getParentId() == -1 ? " {" : " extends " + findDiagramName(diagram.getParentId()) + " {"));
-                    for(Variable variable : diagram.getVariableData()) {
+                // Create java source code file
+                String filePath = packagePath + File.separator + tempDiagram.getNameText().getText() + ".java";
+                try (PrintWriter writer = createJavaSourceCode(tempDiagram, filePath, tempDiagram.getNameText().getText(), false)) {
+                    for(Variable variable : tempDiagram.getVariableData()) {
                         writer.println("\t" + variable.exportString() + ";");
+                        if(!isPrimitive(variable.getTypeName()))
+                            createJavaSourceCode(tempDiagram, packagePath + File.separator +
+                                    variable.getTypeName()+ ".java", variable.getTypeName(), true);
                     }
                     writer.println();
-                    for(Method method : diagram.getMethodData()) {
+                    for(Method method : tempDiagram.getMethodData()) {
                         writer.println("\t" + method.exportString() + (method.isAbstract() ? "" : " {"));
-                        if(!isPrimitive(method.getArgumentOne().split(" ")[0])) {
-                            String newFilePath = packagePath + File.separator + method.getArgumentOne().split(" ")[0] + ".java";
-                            File newfile = new File(newFilePath);
-                            newfile.getParentFile().mkdirs();
-                            PrintWriter newWriter = new PrintWriter(newFilePath, "UTF-8");
-                            newWriter.println((diagram.getPackageName().isEmpty() ? "" : "package " + diagram.getPackageName() + ";") + "\n\npublic class " + method.getArgumentOne().split(" ")[0] +
-                                    " extends Object{\n\tpublic " + method.getArgumentOne().split(" ")[0] + "(){}"+"\n}");
-                            newWriter.close();
-                        }
-                        if(!isPrimitive(method.getArgumentTwo().split(" ")[0])) {
-                            String newFilePath = packagePath + File.separator + method.getArgumentTwo().split(" ")[0] + ".java";
-                            File newfile = new File(newFilePath);
-                            newfile.getParentFile().mkdirs();
-                            PrintWriter newWriter = new PrintWriter(newFilePath, "UTF-8");
-                            newWriter.println((diagram.getPackageName().isEmpty() ? "" : "package " + diagram.getPackageName() + ";") + "\n\npublic class " + method.getArgumentTwo().split(" ")[0] +
-                                    " extends Object{\n\tpublic " + method.getArgumentTwo().split(" ")[0] + "(){}"+"\n}");
-                            newWriter.close();
-                        }
-                        if(!isPrimitive(method.getArgumentThree().split(" ")[0])) {
-                            String newFilePath = packagePath + File.separator + method.getArgumentThree().split(" ")[0] + ".java";
-                            File newfile = new File(newFilePath);
-                            newfile.getParentFile().mkdirs();
-                            PrintWriter newWriter = new PrintWriter(newFilePath, "UTF-8");
-                            newWriter.println((diagram.getPackageName().isEmpty() ? "" : "package " + diagram.getPackageName() + ";") + "\n\npublic class " + method.getArgumentThree().split(" ")[0] +
-                                    " extends Object{\n\tpublic " + method.getArgumentThree().split(" ")[0] + "(){}"+"\n}");
-                            newWriter.close();
-                        }
+                        
+                        String[] argumentOneArray = method.getArgumentOne().split(" ");
+                        String[] argumentTwoArray = method.getArgumentTwo().split(" ");
+                        String[] argumentThreeArray = method.getArgumentThree().split(" ");
+                        
+                        if(!isPrimitive(argumentOneArray[0]))
+                            createJavaSourceCode(tempDiagram, packagePath + File.separator +
+                                    argumentOneArray[0] + ".java", argumentOneArray[0], true);
+                        
+                        if(!isPrimitive(method.getArgumentTwo().split(" ")[0]))
+                            createJavaSourceCode(tempDiagram, packagePath + File.separator +
+                                    argumentTwoArray[0] + ".java", argumentTwoArray[0], true);
+                        
+                        if(!isPrimitive(method.getArgumentThree().split(" ")[0]))
+                            createJavaSourceCode(tempDiagram, packagePath + File.separator +
+                                    argumentThreeArray[0] + ".java", argumentThreeArray[0], true);
+                        
                         if(!method.getReturnType().isEmpty()) {
-                            if(method.getReturnType().equals("byte") || method.getReturnType().equals("short")
-                                || method.getReturnType().equals("int") || method.getReturnType().equals("long")
-                                || method.getReturnType().equals("float") || method.getReturnType().equals("double")) {
-                                writer.println("\t\t" + method.getReturnType() + " returnedObject = 0;\n\t\treturn returnedObject;");
-                            }
-                            else if(method.getReturnType().equals("char")) {
-                                writer.println("int returnedObject = 'a'\n\t\treturn returnedObject;");     
+                            if(method.getReturnType().equals("char")) {
+                                writer.println("\t\treturn Character.UNASSIGNED;");
                             }
                             else if(method.getReturnType().equals("boolean")) {
                                 writer.println("\t\treturn true;");
@@ -171,23 +148,18 @@ public class PageEditController {
                             else if(method.getReturnType().equals("String")) {
                                 writer.println("\t\treturn \"\";");
                             }
+                            else if(isPrimitive(method.getReturnType())) {
+                                writer.println("\t\t" + method.getReturnType() + " returnedObject = 0;\n\t\treturn returnedObject;");
+                            }
                             else if(!method.getReturnType().equals("void")) {
                                 writer.println("\t\treturn new " + method.getReturnType() + "();");
-                                String newFilePath = packagePath + File.separator + method.getReturnType() + ".java";
-                                File newfile = new File(newFilePath);
-                                newfile.getParentFile().mkdirs();
-                                PrintWriter newWriter = new PrintWriter(newFilePath, "UTF-8");
-                                newWriter.println((diagram.getPackageName().isEmpty() ? "" : "package " + diagram.getPackageName() + ";") + "\n\npublic class " + method.getReturnType() +
-                                        " extends Object{\n\tpublic " + method.getReturnType() + "(){}"+"\n}");
-                                newWriter.close();
+                                createJavaSourceCode(tempDiagram, packagePath + File.separator +
+                                        method.getReturnType() + ".java", method.getReturnType(), true);
                             }
                         }
                         writer.println(method.isAbstract() ? ";" :"\t}");
                     }
                     writer.print("}");
-                    writer.close();
-                } catch (FileNotFoundException | UnsupportedEncodingException ex) {
-                    Logger.getLogger(PageEditController.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
         }
@@ -254,6 +226,8 @@ public class PageEditController {
         if (index != -1){
             diagram = (Diagram)pane.getChildren().get(index);
             diagram.addVariable(new Variable("newRandomVariableLaLaLa", "int", true, "public"));
+            diagram.dynamicResize();
+            diagram.dynamicPosition();
         }
     }
 
@@ -346,7 +320,18 @@ public class PageEditController {
     }
 
     public void handleResizeRequest() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        Workspace workspace = (Workspace) app.getWorkspaceComponent();
+        Pane pane = workspace.getLeftPane();
+        if (index != -1){
+            diagram = (Diagram)pane.getChildren().get(index);
+            if(!diagram.getVariableText().getText().isEmpty() || !diagram.getMethodText().getText().isEmpty())
+                diagram.abridgeDiagram();
+            else {
+                diagram.updateVariableText();
+                diagram.updateMethodText();
+            }
+            diagram.dynamicResize();
+        }
     }
 
     public void handlePackageNameUpdateRequest(String packageName) {
@@ -364,6 +349,8 @@ public class PageEditController {
         if (index != -1){
             diagram = (Diagram)pane.getChildren().get(index);
             diagram.addMethod(new Method("newMethodLaLaLa", "Zinga" , false , true, "public" , "int x", "int y", "int z"));
+            diagram.dynamicResize();
+            diagram.dynamicPosition();
         }
     }
 
@@ -416,7 +403,7 @@ public class PageEditController {
         }
         return "";
     }
-    
+    // Find the id of a diagram
     public int findDiagramId(String diagramName) {
         Workspace workspace = (Workspace) app.getWorkspaceComponent();
         Pane pane = workspace.getLeftPane();
@@ -428,7 +415,7 @@ public class PageEditController {
         }
         return -1;
     }
-    
+    // Check whether the class name is primitive type or not
     public boolean isPrimitive(String className) {
         String[] primitiveClass = {"byte", "short", "int", "long", "float", "double", "char", "boolean", "String"};
         for(int i = 0; i < primitiveClass.length; i++) {
@@ -436,6 +423,25 @@ public class PageEditController {
                 return true;
         }
         return false;
+    }
+    
+    // Crete a java source code file
+    public PrintWriter createJavaSourceCode(Diagram tempDiagram, String filePath, String name, boolean isComplete) {
+        PrintWriter writer = null;
+        try {
+            File file = new File(filePath);
+            file.getParentFile().mkdirs();
+            writer = new PrintWriter(filePath, "UTF-8");
+            writer.println((tempDiagram.getPackageName().isEmpty() ? "" : "package " + tempDiagram.getPackageName() + ";\n\n") + 
+                    "public " + (isComplete ? "class " : (tempDiagram.isAbstract() ? "abstract " : "") + (tempDiagram.isInterface() ? 
+                    "interface " : "class ")) + name + " extends Object{" + (isComplete ? "\n\tpublic " + name + "(){}"+  "\n}" : ""));
+        } catch (FileNotFoundException | UnsupportedEncodingException ex) {
+            Logger.getLogger(PageEditController.class.getName()).log(Level.SEVERE, null, ex);
+        } finally {
+            if(isComplete)
+                writer.close();
+        }
+        return writer;
     }
 
 }

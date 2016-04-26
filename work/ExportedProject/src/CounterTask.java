@@ -1,4 +1,4 @@
-public class CounterTask extends Task {
+public class CounterTask extends Object{
 	private ThreadExample app;
 	private int counter;
 

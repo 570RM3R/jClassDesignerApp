@@ -1,4 +1,4 @@
-public class PauseHandler {
+public class PauseHandler extends Object{
 	private ThreadExample app;
 
 	public  PauseHandler(ThreadExample initApp) {

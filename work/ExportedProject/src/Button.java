@@ -1,3 +1,3 @@
-public class Button {
+public class Button extends Object{
 
 }

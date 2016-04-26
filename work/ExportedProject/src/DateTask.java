@@ -1,4 +1,4 @@
-public class DateTask extends Task {
+public class DateTask extends Object{
 	private ThreadExample app;
 	private int now;
 

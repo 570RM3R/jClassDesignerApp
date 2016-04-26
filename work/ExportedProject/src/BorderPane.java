@@ -1,3 +1,3 @@
-public class BorderPane {
+public class BorderPane extends Object{
 
 }
