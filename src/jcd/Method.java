@@ -4,6 +4,9 @@
  * and open the template in the editor.
  */
 package jcd;
+
+import javafx.beans.property.SimpleStringProperty;
+
 /**
  *
  * @author Saeid
@@ -11,14 +14,14 @@ package jcd;
 public class Method {
     String methodName;
     String returnType;
-    boolean isStatic;
-    boolean isAbstract;
+    String isStatic;
+    String isAbstract;
     String accessType;
     String argumentOne;
     String argumentTwo;
     String argumentThree;
     
-    public Method(String methodName, String returnType, boolean isStatic, boolean isAbstract,
+    public Method(String methodName, String returnType, String isStatic, String isAbstract,
             String accessType, String argumentOne, String argumentTwo, String argumentThree) {
         this.methodName = methodName;
         this.returnType = returnType;
@@ -34,32 +37,64 @@ public class Method {
         return methodName;
     }
     
+    public SimpleStringProperty getMethodNameProperty() {
+        return new SimpleStringProperty(methodName);
+    }
+    
     public String getReturnType() {
         return returnType;
     }
     
-    public boolean isStatic() {
+    public SimpleStringProperty getReturnTypeProperty() {
+        return new SimpleStringProperty(returnType);
+    }
+    
+    public String isStatic() {
         return isStatic;
     }
     
-    public boolean isAbstract() {
+    public SimpleStringProperty isStaticProperty() {
+        return new SimpleStringProperty(isStatic);
+    }
+    
+    public String isAbstract() {
         return isAbstract;
+    }
+    
+    public SimpleStringProperty isAbstractProperty() {
+        return new SimpleStringProperty(isAbstract);
     }
     
     public String getAccessType() {
         return accessType;
     }
     
+    public SimpleStringProperty getAccessTypeProperty() {
+        return new SimpleStringProperty(accessType);
+    }
+    
     public String getArgumentOne() {
         return argumentOne;
+    }
+    
+    public SimpleStringProperty getArgumentOneProperty() {
+        return new SimpleStringProperty(argumentOne);
     }
     
     public String getArgumentTwo() {
         return argumentTwo;
     }
     
+    public SimpleStringProperty getArgumentTwoProperty() {
+        return new SimpleStringProperty(argumentTwo);
+    }
+    
     public String getArgumentThree() {
         return argumentThree;
+    }
+    
+    public SimpleStringProperty getArgumentThreeProperty() {
+        return new SimpleStringProperty(argumentThree);
     }
     
     public void setMethodName(String methodName) {
@@ -70,11 +105,11 @@ public class Method {
         this.returnType = returnType;
     }
     
-    public void setStatic(boolean isStatic) {
+    public void setStatic(String isStatic) {
         this.isStatic = isStatic;
     }
     
-    public void setAbstract(boolean isAbstract) {
+    public void setAbstract(String isAbstract) {
         this.isAbstract = isAbstract;
     }
     
@@ -90,51 +125,60 @@ public class Method {
         this.argumentTwo = argumentTwo;
     }
     
-    public void setArgumentThree(String methodName) {
+    public void setArgumentThree(String argumentThree) {
         this.argumentThree = argumentThree;
     }
     
     public String exportString() {
-        return accessType + (isStatic ? " static " : ("" + (isAbstract ? " abstract " : ""))) + " " +
-                returnType + " " + methodName + "(" + argumentOne + (argumentTwo.equals("") ? "" : ", " + argumentTwo) + 
-                (argumentThree.equals("") ? "" : ", " + argumentThree) + ")" ;
+        return accessType + (isStatic.equals("true") ? " static " : ("" + (isAbstract.equals("true") ? " abstract " : ""))) + " " + returnType + " " + 
+                methodName + "(" + argumentOne + (argumentTwo.equals("") ? "" : ", " + argumentTwo) + (argumentThree.equals("") ? "" : ", " + argumentThree) + ")" ;
     }
     
     
     @Override
     public String toString() {
         String methodString = "";
-        if(accessType.equals("public")) {
-            methodString += "+ ";
+        switch(accessType) {
+            case "public":
+                methodString += "+ ";
+                break;
+            case "private":
+                methodString += "- ";
+                break;
+            case "protected":
+                methodString += "# ";
+                break;
         }
-        else if(accessType.equals("private")) {
-            methodString += "- ";
-        }
-        else if(accessType.equals("protected")) {
-            methodString += "# ";
-        }
-        if(isStatic) {
+        if(isStatic.equals("true")) {
             methodString += "$ ";
         }
-        else if(isAbstract) {
+        else if(isAbstract.equals("true")) {
             methodString += "{abstract} ";
         }
         methodString += methodName + " (";
         if(!argumentOne.isEmpty()) {
             String argumentArray[] = argumentOne.split(" ");
-            methodString += argumentArray[1] + " : " + argumentArray[0];
+            if(argumentArray.length == 2)
+                methodString += argumentArray[1] + " : ";
+            methodString += argumentArray[0];
         }
         if(!argumentTwo.isEmpty()) {
+            methodString += ", ";
             String argumentArray[] = argumentTwo.split(" ");
-            methodString += ", " + argumentArray[1] + " : " + argumentArray[0];
+            if(argumentArray.length == 2)
+                methodString += argumentArray[1] + " : ";
+            methodString += argumentArray[0];
         }
         if(!argumentThree.isEmpty()) {
+            methodString += ", ";
             String argumentArray[] = argumentThree.split(" ");
-            methodString += ", " + argumentArray[1] + " : " + argumentArray[0];
+            if(argumentArray.length == 2)
+                methodString += argumentArray[1] + " : ";
+            methodString += argumentArray[0];
         }
         methodString += ")";
         if(!returnType.isEmpty()) {
-            methodString +=  ": " + returnType;
+            methodString +=  " : " + returnType;
         }
         
         return methodString;

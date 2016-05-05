@@ -5,7 +5,7 @@
  */
 package jcd;
 import java.util.ArrayList;
-import java.util.List;
+import javafx.beans.binding.DoubleBinding;
 import javafx.collections.ObservableList;
 import javafx.scene.Parent;
 import javafx.scene.paint.Color;
@@ -19,8 +19,6 @@ import javafx.scene.text.Text;
 public class Diagram extends Parent{
     static int idCounter = 0;
     int diagramId;
-    double width;
-    double height;
     Rectangle nameSection;
     Rectangle variableSection;
     Rectangle methodSection;
@@ -30,23 +28,23 @@ public class Diagram extends Parent{
     String packageName;
     boolean isInterface;
     boolean isAbstract;
+    boolean isAbriged;
     Text headingText;
     ObservableList<Variable> variableData;
     ObservableList<Method> methodData;
-    int parentId;
-    int aggregateId;
-    int relationshipId;
-    ArrayList<List<Double>> pointData;
+    ArrayList<Integer> inheritanceData;
+    ArrayList<Integer> aggregationData;
+    ArrayList<Integer> relationshipData;
+    ArrayList<Integer> connectorData;
     
-    public Diagram(int diagramId, double x, double y, double width, double height, String nameString, String packageName,boolean isInterface, 
-            boolean isAbstract, ObservableList<Variable> variableData, ObservableList<Method> methodData, int parentId, ArrayList<List<Double>> pointData) {
+    public Diagram(int diagramId, double x, double y, String nameString, String packageName, boolean isInterface, boolean isAbstract,
+            boolean isAbriged, ObservableList<Variable> variableData, ObservableList<Method> methodData, ArrayList<Integer> inheritanceData,
+            ArrayList<Integer> aggregationData, ArrayList<Integer> relationshipData, ArrayList<Integer> connectorData) {
         this.diagramId = diagramId == -1 ? Diagram.idCounter : diagramId;
         nameSection = new Rectangle(125, 30);
-        nameSection.setX(x - 62.5);
+        nameSection.setX(x - 66.5);
         nameSection.setY(y - 15);
-        this.width = width;
-        this.height = height;
-        nameText = new Text(nameString);
+        nameText = new Text(nameString);       
         headingText = new Text();
         if(isInterface) {
             headingText.setText("<<Interface>>");
@@ -60,26 +58,56 @@ public class Diagram extends Parent{
         this.packageName = packageName;
         this.isAbstract = isAbstract;
         this.isInterface = isInterface;
+        this.isAbriged = isAbriged;
         variableSection = new Rectangle();
         variableText = new Text();
         methodSection = new Rectangle();
         methodText = new Text();
         this.methodData = methodData;
         getChildren().addAll(nameSection, headingText, nameText, variableSection, variableText, methodSection, methodText);
-        this.parentId = parentId;
-        this.pointData = pointData;
+        this.inheritanceData = inheritanceData;
+        this.aggregationData = aggregationData;
+        this.relationshipData = relationshipData;
+        this.connectorData = connectorData;        
+        idCounter++;
     }
     
     public int getDiagramId(){
         return diagramId;
     }
-    
-    public double getDiagramWidth() {
-        return nameSection.getWidth() + variableSection.getWidth() + methodSection.getWidth();
+    // Top, right, bottom, left
+    public DoubleBinding getConnectionX(int side) {
+        switch(side) {
+            case 1:
+                return nameSection.xProperty().add(widthProperty().divide(2));
+            case 2:
+                return nameSection.xProperty().add(widthProperty());
+            case 3:
+                return nameSection.xProperty().add(widthProperty().divide(2));
+            default:
+                return nameSection.xProperty().add(0);
+        }     
+    }
+    // Top, right, bottom, left
+    public DoubleBinding getConnectionY(int side) {
+        switch(side) {
+            case 1:
+                return nameSection.yProperty().add(0);
+            case 2:
+                return nameSection.yProperty().add(heightProperty().divide(2));
+            case 3:
+                return nameSection.yProperty().add(heightProperty());
+            default:
+                return nameSection.yProperty().add(heightProperty().divide(2));
+        }     
     }
     
-    public double getDiagramHeight() {
-        return nameSection.getHeight() + variableSection.getHeight() + methodSection.getHeight();
+    public DoubleBinding widthProperty() {
+        return nameSection.widthProperty().add(0);
+    }
+    
+    public DoubleBinding heightProperty() {
+        return nameSection.heightProperty().add(variableSection.heightProperty().add(methodSection.heightProperty()));
     }
     
     public Rectangle getNameSection() {
@@ -118,12 +146,12 @@ public class Diagram extends Parent{
         return isAbstract;
     }
     
-    public Text getHeadingText() {
-        return headingText;
+    public boolean isAbriged() {
+        return isAbriged;
     }
     
-    public int getParentId(){
-        return parentId;
+    public Text getHeadingText() {
+        return headingText;
     }
     
     public static int getIdCounter() {
@@ -138,36 +166,53 @@ public class Diagram extends Parent{
         return methodData;
     }
     
-    public ArrayList<List<Double>> getPointData() {
-        return pointData;
+    public ArrayList<Integer> getInheritanceData(){
+        return inheritanceData;
+    }
+    
+    public ArrayList<Integer> getAggregationData(){
+        return aggregationData;
+    }
+    
+    public ArrayList<Integer> getRelationshipData(){
+        return relationshipData;
+    }
+    
+    public ArrayList<Integer> getConnectorData(){
+        return connectorData;
     }
     
     public void setPackageName(String packageName) {
         this.packageName = packageName;
     }
     
-    public void setParentId(int parentId) {
-        this.parentId = parentId;
-    }
-    
     public static void setIdCounter(int idCounter) {
         Diagram.idCounter = idCounter;
     }
     
+    public void setAbriged(boolean isAbriged) {
+        this.isAbriged = isAbriged;
+    }
+    
     public void addVariable(Variable newVariable) {
-        if(!isInterface && isValidVariable(newVariable)) {
+        if(!isInterface && isValidVariable(newVariable))
             variableData.add(newVariable);
-            variableText.setText(variableText.getText() + "\n" + newVariable.toString());
-        }
+    }
+    
+    public void removeVariable(Variable selectedVariable) {
+        if(!isInterface)
+            variableData.remove(selectedVariable);
     }
     
     public void addMethod(Method newMethod) {
-        if(isValidMethod(newMethod)) {
+        if(isValidMethod(newMethod))
             methodData.add(newMethod);
-            methodText.setText(methodText.getText() + "\n" + newMethod.toString());
-        }
     }
     
+    public void removeMethod(Method selectedMethod) {
+        if(!isInterface)
+            methodData.remove(selectedMethod);
+    }
     
     public void dynamicPosition() {
         nameText.setX(nameSection.getX() + 6);
@@ -188,6 +233,14 @@ public class Diagram extends Parent{
         methodText.setY(methodSection.getY() + 6);
     }
     
+    public void removeInheritanceData(int id) {
+        for(int i = 0; i< inheritanceData.size(); i++) {
+            if(inheritanceData.get(i) == id) {
+                inheritanceData.remove(i);
+                break;
+            }
+        }
+    }    
     
     public void dynamicResize() {
         // Fix the width and height dynamically when there is no variable
@@ -230,12 +283,14 @@ public class Diagram extends Parent{
     }
     
     public void updateVariableText() {
+        variableText.setText("");
         for(int i = 0; i < variableData.size(); i++) {
             variableText.setText(variableText.getText() + "\n" + variableData.get(i).toString());
         }
     }
     
     public void updateMethodText() {
+        methodText.setText("");
         for(int i = 0; i < methodData.size(); i++) {
             methodText.setText(methodText.getText() + "\n" + methodData.get(i).toString());
         }
@@ -269,7 +324,6 @@ public class Diagram extends Parent{
     public void setPosition(double PositionX, double PositionY) {
         nameSection.setX(PositionX);
         nameSection.setY(PositionY);
-        dynamicPosition();
     }
     
     public void setFill(Color color) {
@@ -324,19 +378,11 @@ public class Diagram extends Parent{
         }
         
         diagramString += "\nPoints:\n";
-        if(pointData.isEmpty()) {
-            diagramString += "No points\n";
+        if(inheritanceData.isEmpty() && aggregationData.isEmpty() && relationshipData.isEmpty()) {
+            diagramString += "No connectors\n";
         }
         else {
-            diagramString += "[" + pointData.get(0);
-            for(int i = 1; i < pointData.size(); i++){
-                diagramString += "{" + pointData.get(i).get(0);
-                for(int j = 1; j < pointData.get(i).size(); j++) {
-                    diagramString += ", " + pointData.get(i).get(j);
-                }
-                diagramString += "}";
-            }
-            diagramString += "]";
+            diagramString += "Connector Data";
         }
         diagramString += "\n\n";
         return diagramString;

@@ -6,8 +6,6 @@
 package jcd.gui;
 
 import java.io.IOException;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import static javafx.geometry.Orientation.VERTICAL;
 import javafx.scene.control.Button;
@@ -16,16 +14,27 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Separator;
+import javafx.scene.control.Slider;
 import javafx.scene.control.SplitPane;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
-import static javafx.scene.control.TableView.CONSTRAINED_RESIZE_POLICY;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
+import javafx.util.Callback;
 import jcd.Diagram;
+import jcd.Method;
+import jcd.MethodCellCheckBox;
+import jcd.MethodCellComboBox;
+import jcd.MethodCellText;
+import jcd.Variable;
+import jcd.VariableCellComboBox;
+import jcd.VariableCellText;
+import jcd.VariableCellCheckBox;
+import jcd.ZoomingPane;
 import jcd.controller.PageEditController;
 import jcd.data.DataManager;
 import jcd.file.FileManager;
@@ -66,6 +75,7 @@ public class Workspace extends AppWorkspaceComponent {
     
     // The pane for editing options
     Pane leftPane;
+    ZoomingPane zoomingPane;
     VBox rightPane;
     GridPane infoGridPaneOne;
     GridPane infoGridPaneTwo;
@@ -88,26 +98,39 @@ public class Workspace extends AppWorkspaceComponent {
     Button selectButton;
     Button resizeButton;
     Button addInterfaceButton;
-    Button addVariablesButton;
-    Button removeVariablesButton;
-    Button addMethodsButton;
-    Button removeMethodsButton;
+    Button addVariableButton;
+    Button removeVariableButton;
+    Button addMethodButton;
+    Button removeMethodButton;
     Button saveAsPhotoButton;
     Button exitButton;
     Button removeDiagramButton;
     Button undoButton;
     Button redoButton;
-    Button zoomInButton;
-    Button zoomOutButton;
+//    Button zoomInButton;
+//    Button zoomOutButton;
+    Slider zoomSlider;
     CheckBox gridCheckBox;
-    CheckBox snapCheckBox;
+    CheckBox snapCheckBox;  
     Button helpButton;
     Button infoButton;
+
+    TableView<Variable> variableTableView;
+    TableColumn<Variable, String> variableNameColumn;
+    TableColumn<Variable, String> variableTypeColumn;
+    TableColumn<Variable, String> variableIsStaticColumn;
+    TableColumn<Variable, String> variableAccessColumn;
     
-    TableView variablesTableView;
-    TableView methodsTableView;
+    TableView<Method> methodTableView;
+    TableColumn<Method, String> methodNameColumn;
+    TableColumn<Method, String> methodReturnTypeColumn;
+    TableColumn<Method, String> methodIsStaticColumn;
+    TableColumn<Method, String> methodIsAbstractColumn;
+    TableColumn<Method, String> methodAccessTypeColumn;
+    TableColumn<Method, String> methodArgOneColumn;
+    TableColumn<Method, String> methodArgTwoColumn;
+    TableColumn<Method, String> methodArgThreeColumn;
     
-    final ObservableList<String> accessOption;
     
     // HERE ARE OUR DIALOGS
     AppMessageDialogSingleton messageDialog;
@@ -144,14 +167,16 @@ public class Workspace extends AppWorkspaceComponent {
         
         // THESE ARE THE MAIN TWO PANES OF THE APPLICATION
         leftPane = new Pane();
-        leftPane.setMinSize(1060, 800);
-        leftPane.setMaxSize(1060, 800);
+        leftPane.setMinSize(1200,870);
+        zoomingPane = new ZoomingPane(leftPane);
+        ScrollPane leftScrollPane = new ScrollPane(zoomingPane);
+        leftScrollPane.setMinSize(1060, 747);
+        leftScrollPane.setMaxSize(1060, 747);
+        
         rightPane = new VBox(20);
         rightPane.setPadding(new Insets(8, 12, 8, 12));
         rightPane.setMaxWidth(370);
-        rightPane.setMinHeight(800);
-        
-        accessOption = FXCollections.observableArrayList("public", "protected", "<no modifier>", "private");
+        rightPane.setMinHeight(747);
         
         // THIS WILL MANAGE ALL EDITING EVENTS
 	pageEditController = new PageEditController((jClassDesigner) app);
@@ -168,11 +193,13 @@ public class Workspace extends AppWorkspaceComponent {
         undoButton = gui.initChildButton(gui.getToolbarPane(), UNDO_ICON.toString(), UNDO_TOOLTIP.toString(), false);
         redoButton = gui.initChildButton(gui.getToolbarPane(), REDO_ICON.toString(), REDO_TOOLTIP.toString(), false);
         gui.getToolbarPane().getChildren().add(new Separator(VERTICAL));
-        zoomInButton = gui.initChildButton(gui.getToolbarPane(), ZOOM_IN_ICON.toString(), ZOOM_IN_TOOLTIP.toString(), false);
-        zoomOutButton = gui.initChildButton(gui.getToolbarPane(), ZOOM_OUT_ICON.toString(), ZOOM_OUT_TOOLTIP.toString(), false);
+        //zoomInButton = gui.initChildButton(gui.getToolbarPane(), ZOOM_IN_ICON.toString(), ZOOM_IN_TOOLTIP.toString(), false);
+        //zoomOutButton = gui.initChildButton(gui.getToolbarPane(), ZOOM_OUT_ICON.toString(), ZOOM_OUT_TOOLTIP.toString(), false);
+        zoomSlider = new Slider(0.5,2,1);
+        zoomingPane.zoomFactorProperty().bind(zoomSlider.valueProperty());
         gridCheckBox = new CheckBox("Grid");
         snapCheckBox = new CheckBox("Snap");
-        gui.getToolbarPane().getChildren().addAll(gridCheckBox, snapCheckBox, new Separator(VERTICAL));
+        gui.getToolbarPane().getChildren().addAll(zoomSlider, gridCheckBox, snapCheckBox, new Separator(VERTICAL));
         helpButton = gui.initChildButton(gui.getToolbarPane(), HELP_ICON.toString(), HELP_TOOLTIP.toString(), false);
         infoButton = gui.initChildButton(gui.getToolbarPane(), INFO_ICON.toString(), INFO_TOOLTIP.toString(), false);
         infoGridPaneOne = new GridPane();
@@ -188,19 +215,84 @@ public class Workspace extends AppWorkspaceComponent {
         methodsLabel = new Label ("Methods:         ");
         
         nameTextField = new TextField();
+        nameTextField.setPromptText("Class/Interface Name");
         packageTextField = new TextField();
+        packageTextField.setPromptText("Package Name");
         parentComboBox = new ComboBox();
+        parentComboBox.setPromptText("Parent Name");
+        parentComboBox.setEditable(true);
         
-        variablesTableView = new TableView();
-        variablesTableView.setEditable(true);
-        variablesTableView.getColumns().addAll(new TableColumn("Name"), new TableColumn("Type"), new TableColumn("Static"), new TableColumn("Access"));
-        variablesTableView.setColumnResizePolicy(CONSTRAINED_RESIZE_POLICY);
+        variableTableView = new TableView();
+        variableTableView.setEditable(true);
         
-        methodsTableView = new TableView();
-        methodsTableView.setEditable(true);
-        methodsTableView.getColumns().addAll(new TableColumn("Name"), new TableColumn("Return"), new TableColumn("Static"), new TableColumn("Abstract"), 
-                new TableColumn("Access"), new TableColumn("Arg 1"), new TableColumn("Arg 2"), new TableColumn("Arg 3"));
-        methodsTableView.setColumnResizePolicy(CONSTRAINED_RESIZE_POLICY);
+        variableNameColumn = new TableColumn("Name");
+        Callback<TableColumn<Variable, String>, TableCell<Variable, String>> variableNameCellFactory = (TableColumn<Variable, String> param) -> new VariableCellText();
+        variableNameColumn.setCellValueFactory(cellData -> cellData.getValue().getVariableNameProperty());
+        variableNameColumn.setCellFactory(variableNameCellFactory);
+        
+        variableTypeColumn = new TableColumn("Type");
+        Callback<TableColumn<Variable, String>, TableCell<Variable, String>> variableTypeCellFactory = (TableColumn<Variable, String> param) -> new VariableCellText();
+        variableTypeColumn.setCellValueFactory(cellData -> cellData.getValue().getVariableTypeProperty());
+        variableTypeColumn.setCellFactory(variableTypeCellFactory);
+        
+        variableIsStaticColumn = new TableColumn("Static");
+        Callback<TableColumn<Variable, String>, TableCell<Variable, String>> variableIsStaticCellFactory = (TableColumn<Variable, String> param) -> new VariableCellCheckBox();
+        variableIsStaticColumn.setCellValueFactory(cellData -> cellData.getValue().isStaticProperty());
+        variableIsStaticColumn.setCellFactory(variableIsStaticCellFactory);
+        
+        variableAccessColumn = new TableColumn("Access");
+        Callback<TableColumn<Variable, String>, TableCell<Variable, String>> variableAccessCellFactory = (TableColumn<Variable, String> param) -> new VariableCellComboBox();
+        variableAccessColumn.setCellValueFactory(cellData -> cellData.getValue().getAccessTypeProperty());
+        variableAccessColumn.setCellFactory(variableAccessCellFactory);
+        
+        variableTableView.getColumns().addAll(variableNameColumn, variableTypeColumn, variableIsStaticColumn, variableAccessColumn);
+        
+        methodTableView = new TableView();
+        methodTableView.setEditable(true);
+        
+        methodNameColumn = new TableColumn("Name");
+        Callback<TableColumn<Method, String>, TableCell<Method, String>> methodNameCellFactory = (TableColumn<Method, String> param) -> new MethodCellText();
+        methodNameColumn.setCellValueFactory(cellData -> cellData.getValue().getMethodNameProperty());
+        methodNameColumn.setCellFactory(methodNameCellFactory);
+        
+        methodReturnTypeColumn = new TableColumn("Return");
+        Callback<TableColumn<Method, String>, TableCell<Method, String>> methodRetrunTypeCellFactory = (TableColumn<Method, String> param) -> new MethodCellText();
+        methodReturnTypeColumn.setCellValueFactory(cellData -> cellData.getValue().getReturnTypeProperty());
+        methodReturnTypeColumn.setCellFactory(methodRetrunTypeCellFactory);
+        
+        methodIsStaticColumn = new TableColumn("Static");
+        Callback<TableColumn<Method, String>, TableCell<Method, String>> methodIsStaticCellFactory = (TableColumn<Method, String> param) -> new MethodCellCheckBox();
+        methodIsStaticColumn.setCellValueFactory(cellData -> cellData.getValue().isStaticProperty());
+        methodIsStaticColumn.setCellFactory(methodIsStaticCellFactory);
+        
+        methodIsAbstractColumn = new TableColumn("Abstract");
+        Callback<TableColumn<Method, String>, TableCell<Method, String>> methodIsAbstractCellFactory = (TableColumn<Method, String> param) -> new MethodCellCheckBox();
+        methodIsAbstractColumn.setCellValueFactory(cellData -> cellData.getValue().isAbstractProperty());
+        methodIsAbstractColumn.setCellFactory(methodIsAbstractCellFactory);
+        
+        methodAccessTypeColumn = new TableColumn("Access");
+        Callback<TableColumn<Method, String>, TableCell<Method, String>> methodAccessTypeCellFactory = (TableColumn<Method, String> param) -> new MethodCellComboBox();
+        methodAccessTypeColumn.setCellValueFactory(cellData -> cellData.getValue().getAccessTypeProperty());
+        methodAccessTypeColumn.setCellFactory(methodAccessTypeCellFactory);
+        
+        methodArgOneColumn = new TableColumn("Arg 1");
+        Callback<TableColumn<Method, String>, TableCell<Method, String>> methodArgOneCellFactory = (TableColumn<Method, String> param) -> new MethodCellText();
+        methodArgOneColumn.setCellValueFactory(cellData -> cellData.getValue().getArgumentOneProperty());
+        methodArgOneColumn.setCellFactory(methodArgOneCellFactory);
+        
+        methodArgTwoColumn = new TableColumn("Arg 2");
+        Callback<TableColumn<Method, String>, TableCell<Method, String>> methodArgTwoCellFactory = (TableColumn<Method, String> param) -> new MethodCellText();
+        methodArgTwoColumn.setCellValueFactory(cellData -> cellData.getValue().getArgumentTwoProperty());
+        methodArgTwoColumn.setCellFactory(methodArgTwoCellFactory);
+        
+        methodArgThreeColumn = new TableColumn("Arg 3");
+        Callback<TableColumn<Method, String>, TableCell<Method, String>> methodArgThreeCellFactory = (TableColumn<Method, String> param) -> new MethodCellText();
+        methodArgThreeColumn.setCellValueFactory(cellData -> cellData.getValue().getArgumentThreeProperty());
+        methodArgThreeColumn.setCellFactory(methodArgThreeCellFactory);
+        
+        
+        methodTableView.getColumns().addAll(methodNameColumn, methodReturnTypeColumn, methodIsStaticColumn, methodIsAbstractColumn, 
+                methodAccessTypeColumn, methodArgOneColumn, methodArgTwoColumn, methodArgThreeColumn);
         
         infoGridPaneOne.add(nameLabel, 0, 0);
         infoGridPaneOne.add(nameTextField, 1, 0);
@@ -210,21 +302,21 @@ public class Workspace extends AppWorkspaceComponent {
         infoGridPaneOne.add(parentComboBox, 1, 2);
         infoGridPaneOne.add(variablesLabel, 0, 3);
         HBox tempHBoxOne = new HBox(15);
-        addVariablesButton = gui.initChildButton(tempHBoxOne, PLUS_ICON.toString(), ADD_VARIABLE_TOOLTIP.toString(), false);
-        removeVariablesButton = gui.initChildButton(tempHBoxOne, MINUS_ICON.toString(), REMOVE_VARIABLE_TOOLTIP.toString(), false);
+        addVariableButton = gui.initChildButton(tempHBoxOne, PLUS_ICON.toString(), ADD_VARIABLE_TOOLTIP.toString(), false);
+        removeVariableButton = gui.initChildButton(tempHBoxOne, MINUS_ICON.toString(), REMOVE_VARIABLE_TOOLTIP.toString(), false);
         
         infoGridPaneOne.add(tempHBoxOne, 1, 3);
-        ScrollPane tempScrollPaneOne = new ScrollPane(variablesTableView);
+        ScrollPane tempScrollPaneOne = new ScrollPane(variableTableView);
         tempScrollPaneOne.setMaxSize(360, 210);
         
         rightPane.getChildren().addAll(infoGridPaneOne, tempScrollPaneOne);
         
         HBox tempHBoxTwo = new HBox(15);
         infoGridPaneTwo.add(methodsLabel, 0, 0);
-        addMethodsButton = gui.initChildButton(tempHBoxTwo, PLUS_ICON.toString(), ADD_METHOD_TOOLTIP.toString(), false);
-        removeMethodsButton = gui.initChildButton(tempHBoxTwo, MINUS_ICON.toString(), REMOVE_METHOD_TOOLTIP.toString(), false);
+        addMethodButton = gui.initChildButton(tempHBoxTwo, PLUS_ICON.toString(), ADD_METHOD_TOOLTIP.toString(), false);
+        removeMethodButton = gui.initChildButton(tempHBoxTwo, MINUS_ICON.toString(), REMOVE_METHOD_TOOLTIP.toString(), false);
         infoGridPaneTwo.add(tempHBoxTwo, 1, 0);
-        ScrollPane tempScrollPaneTwo = new ScrollPane(methodsTableView);
+        ScrollPane tempScrollPaneTwo = new ScrollPane(methodTableView);
         tempScrollPaneTwo.setMaxSize(360, 210);
         
         rightPane.getChildren().addAll(infoGridPaneTwo, tempScrollPaneTwo);
@@ -252,7 +344,7 @@ public class Workspace extends AppWorkspaceComponent {
             pageEditController.handleAddInterfaceRequest();
         });
         removeDiagramButton.setOnAction(e -> {
-            pageEditController.handleRemoveDiagramRequest();
+            pageEditController.handleRemoveRequest();
         });
         undoButton.setOnAction(e -> {
             pageEditController.handleUndoRequest();
@@ -260,17 +352,26 @@ public class Workspace extends AppWorkspaceComponent {
         redoButton.setOnAction(e -> {
             pageEditController.handleRedoRequest();
         });
-        zoomInButton.setOnAction(e -> {
-            pageEditController.handleZoomInRequest();
-        });
-        zoomOutButton.setOnAction(e -> {
-            pageEditController.handleZoomOutRequest();
-        });
+//        zoomInButton.setOnAction(e -> {
+//            pageEditController.handleZoomInRequest();
+//        });
+//        zoomOutButton.setOnAction(e -> {
+//            pageEditController.handleZoomOutRequest();
+//        });
         helpButton.setOnAction(e -> {
             pageEditController.handleHelpRequest();
         });
         infoButton.setOnAction(e -> {
             pageEditController.handleInfoRequest();
+        });
+        gridCheckBox.setOnAction(e -> {
+            pageEditController.handleGridRequest(gridCheckBox.isSelected(), leftPane.getWidth(), leftPane.getHeight());
+        });
+        snapCheckBox.setOnAction(e -> {
+            if(pageEditController.getSnapEnabled())
+                pageEditController.handleGridRequest(false);
+            else
+                pageEditController.handleGridRequest(true);
         });
         nameTextField.setOnKeyReleased(e -> {
             pageEditController.handleNameUpdateRequest(nameTextField.getText());
@@ -278,21 +379,64 @@ public class Workspace extends AppWorkspaceComponent {
         packageTextField.setOnKeyReleased(e -> {
             pageEditController.handlePackageNameUpdateRequest(packageTextField.getText());
         });
-        parentComboBox.setOnHiding(e -> {
-            if(parentComboBox.getValue() != null)
+        parentComboBox.valueProperty().addListener(e -> {
+            if(parentComboBox.getValue() != null && !parentComboBox.getValue().equals(""))
                 pageEditController.handleParentComboBoxUpdateRequest(parentComboBox.getValue().toString());
         });
-        addVariablesButton.setOnAction(e -> {
+        addVariableButton.setOnAction(e -> {
             pageEditController.handleAddVariablesRequest();
         });
-        removeVariablesButton.setOnAction(e -> {
-            pageEditController.handleRemoveVariablesRequest();
+        variableNameColumn.setOnEditCommit((TableColumn.CellEditEvent<Variable, String> tableColumn) -> {
+            if(!tableColumn.getNewValue().equals(""))
+                pageEditController.handleVariableTableUpdateRequest(tableColumn, 1);
         });
-        addMethodsButton.setOnAction(e -> {
+        variableTypeColumn.setOnEditCommit((TableColumn.CellEditEvent<Variable, String> tableColumn) -> {
+            if(!tableColumn.getNewValue().equals(""))
+                pageEditController.handleVariableTableUpdateRequest(tableColumn, 2);
+        });
+        variableIsStaticColumn.setOnEditCommit((TableColumn.CellEditEvent<Variable, String> tableColumn) -> {
+                pageEditController.handleVariableTableUpdateRequest(tableColumn, 3);
+        });
+        variableAccessColumn.setOnEditCommit((TableColumn.CellEditEvent<Variable, String> tableColumn) -> {
+                pageEditController.handleVariableTableUpdateRequest(tableColumn, 4);
+        });
+        removeVariableButton.setOnAction(e -> {
+            pageEditController.handleRemoveVariablesRequest(variableTableView.getSelectionModel().getSelectedItem());
+        });
+        addMethodButton.setOnAction(e -> {
             pageEditController.handleAddMethodsRequest();
         });
-        removeMethodsButton.setOnAction(e -> {
-            pageEditController.handleRemoveMethodsRequest();
+        methodNameColumn.setOnEditCommit((TableColumn.CellEditEvent<Method, String> tableColumn) -> {
+            if(!tableColumn.getNewValue().equals(""))
+                pageEditController.handleMethodTableUpdateRequest(tableColumn, 1);
+        });
+        methodReturnTypeColumn.setOnEditCommit((TableColumn.CellEditEvent<Method, String> tableColumn) -> {
+            if(!tableColumn.getNewValue().equals(""))
+                pageEditController.handleMethodTableUpdateRequest(tableColumn, 2);
+        });
+        methodIsStaticColumn.setOnEditCommit((TableColumn.CellEditEvent<Method, String> tableColumn) -> {
+                pageEditController.handleMethodTableUpdateRequest(tableColumn, 3);
+        });
+        methodIsAbstractColumn.setOnEditCommit((TableColumn.CellEditEvent<Method, String> tableColumn) -> {
+                pageEditController.handleMethodTableUpdateRequest(tableColumn, 4);
+        });
+        methodAccessTypeColumn.setOnEditCommit((TableColumn.CellEditEvent<Method, String> tableColumn) -> {
+                pageEditController.handleMethodTableUpdateRequest(tableColumn, 5);
+        });
+        methodArgOneColumn.setOnEditCommit((TableColumn.CellEditEvent<Method, String> tableColumn) -> {
+            if(!tableColumn.getNewValue().equals(""))
+                pageEditController.handleMethodTableUpdateRequest(tableColumn, 6);
+        });
+        methodArgTwoColumn.setOnEditCommit((TableColumn.CellEditEvent<Method, String> tableColumn) -> {
+            if(!tableColumn.getNewValue().equals(""))
+                pageEditController.handleMethodTableUpdateRequest(tableColumn, 7);
+        });
+        methodArgThreeColumn.setOnEditCommit((TableColumn.CellEditEvent<Method, String> tableColumn) -> {
+            if(!tableColumn.getNewValue().equals(""))
+                pageEditController.handleMethodTableUpdateRequest(tableColumn, 8);
+        });
+        removeMethodButton.setOnAction(e -> {
+            pageEditController.handleRemoveMethodsRequest(methodTableView.getSelectionModel().getSelectedItem());
         });
         
         // NOTE THAT WE HAVE NOT PUT THE WORKSPACE INTO THE WINDOW,
@@ -302,7 +446,7 @@ public class Workspace extends AppWorkspaceComponent {
         
         //SET THE RIGHT PANE OF DATA MANAGER
         dataManager.setLeftPane(leftPane);
-        workspaceSplitPane.getItems().addAll(leftPane, rightPane);
+        workspaceSplitPane.getItems().addAll(leftScrollPane, rightPane);
         workspace.getChildren().add(workspaceSplitPane);
         reloadWorkspace(-1);
         
@@ -310,6 +454,10 @@ public class Workspace extends AppWorkspaceComponent {
     
     public Pane getLeftPane() {
         return leftPane;
+    }
+    
+    public ZoomingPane getZoomingPane() {
+        return zoomingPane;
     }
     
     public TextField getNameTextField() {
@@ -322,16 +470,7 @@ public class Workspace extends AppWorkspaceComponent {
     
     public ComboBox getParentComboBox() {
         return parentComboBox;
-    }
-    
-    public TableView getVariablesTableView() {
-        return variablesTableView;
-    }
-    
-    public TableView getMethodsTableView() {
-        return methodsTableView;
-    }
-    
+    }   
     
     /**
      * This function specifies the CSS style classes for all the UI components
@@ -358,12 +497,26 @@ public class Workspace extends AppWorkspaceComponent {
      */
     @Override
     public void reloadWorkspace(int index) {
+        // Update the parent combobox
         if(!leftPane.getChildren().isEmpty()) {
             parentComboBox.getItems().clear();
             for(int i = 0; i < leftPane.getChildren().size(); i++) {
-                Diagram diagram = (Diagram)leftPane.getChildren().get(i);
-                parentComboBox.getItems().add(diagram.getNameText().getText());
+                if (leftPane.getChildren().get(i) instanceof Diagram) {
+                    Diagram diagram = (Diagram)leftPane.getChildren().get(i);
+                    parentComboBox.getItems().add(diagram.getNameText().getText());
+                }
             }
+        }
+        // Update variable and method tables
+        if (index != -1 && leftPane.getChildren().get(index) instanceof Diagram){
+            Diagram diagram = (Diagram)leftPane.getChildren().get(index);
+            diagram.dynamicResize();
+            variableTableView.setItems(diagram.getVariableData());
+            methodTableView.setItems(diagram.getMethodData());
+        }
+        else {
+            variableTableView.setItems(null);
+            methodTableView.setItems(null);
         }
     }
 }

@@ -5,6 +5,8 @@
  */
 package jcd;
 
+import javafx.beans.property.SimpleStringProperty;
+
 /**
  *
  * @author Saeid
@@ -12,10 +14,10 @@ package jcd;
 public class Variable {
     String variableName;
     String typeName;
-    boolean isStatic;
+    String isStatic;
     String accessType;
     
-    public Variable(String variableName, String typeName, boolean isStatic, String accessType) {
+    public Variable(String variableName, String typeName, String isStatic, String accessType) {
         this.variableName = variableName;
         this.typeName = typeName;
         this.isStatic = isStatic;
@@ -25,17 +27,31 @@ public class Variable {
     public String getVariableName() {
         return variableName;
     }
+    public SimpleStringProperty getVariableNameProperty() {
+        return new SimpleStringProperty(variableName);
+    }
     
     public String getTypeName() {
         return typeName;
     }
     
-    public boolean isStatic() {
+    public SimpleStringProperty getVariableTypeProperty() {
+        return new SimpleStringProperty(typeName);
+    }
+    
+    public String isStatic() {
         return isStatic;
+    }
+    public SimpleStringProperty isStaticProperty() {
+        return new SimpleStringProperty(isStatic);
     }
     
     public String getAccessType() {
         return accessType;
+    }
+    
+    public SimpleStringProperty getAccessTypeProperty() {
+        return new SimpleStringProperty(accessType);
     }
     
     public void setVariableName(String variableName) {
@@ -46,7 +62,7 @@ public class Variable {
         this.typeName = typeName;
     }
     
-    public void setStatic(boolean isStatic) {
+    public void setStatic(String isStatic) {
         this.isStatic = isStatic;
     }
     
@@ -55,22 +71,24 @@ public class Variable {
     }
     
     public String exportString() {
-        return accessType + (isStatic ? " static " : " ") + typeName + " " + variableName;
+        return accessType + (isStatic.equals("ture") ? " static " : " ") + typeName + " " + variableName;
     }
     
     @Override
     public String toString() {
         String variableString = "";
-        if(accessType.equals("public")) {
-            variableString += "+ ";
+        switch (accessType) {
+            case "public":
+                variableString += "+ ";
+                break;
+            case "private":
+                variableString += "- ";
+                break;
+            case "protected":
+                variableString += "# ";
+                break;
         }
-        else if(accessType.equals("private")) {
-            variableString += "- ";
-        }
-        else if(accessType.equals("protected")) {
-            variableString += "# ";
-        }
-        if(isStatic) {
+        if(isStatic.equals("true")) {
             variableString += "$ ";
         }
         variableString += variableName + " : " + typeName;

@@ -38,7 +38,7 @@ and open the template in the editor.
 
 // CSS CLASS FOR OUR BIG PANES
 .bordered_pane {
-    -fx-background-color: #eae0e0;
+    -fx-background-color: #e0eae1; //#eae0e0
     -fx-spacing: 20;
     -fx-border-color: #7777dd;
     -fx-border-style: dotted;

@@ -13,9 +13,7 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -56,8 +54,6 @@ public class FileManager implements AppFileComponent {
     public static final String JSON_DIAGRAM_ID = "diagram_id";
     public static final String JSON_X_COORDINATE = "x_coordinate";
     public static final String JSON_Y_COORDINATE = "y_coordinate";
-    public static final String JSON_WIDTH = "width";
-    public static final String JSON_HEIGHT = "height";
     public static final String JSON_NAME_STRING = "name_string";
     public static final String JSON_IS_INTERFACE = "is_interface";
     public static final String JSON_PACKAGE_NAME = "package_name";
@@ -68,6 +64,7 @@ public class FileManager implements AppFileComponent {
     public static final String JSON_TYPE_NAME = "type_name";
     public static final String JSON_IS_STATIC = "is_static";
     public static final String JSON_IS_ABSTRACT = "is_abstract";
+    public static final String JSON_IS_ABRIGED = "is_abriged";
     public static final String JSON_ACCESS_TYPE = "access_type";
     public static final String JSON_METHOD_NAME = "method_name";
     public static final String JSON_RETURN_TYPE = "return_type";
@@ -75,6 +72,10 @@ public class FileManager implements AppFileComponent {
     public static final String JSON_ARGUMENT_TWO = "argument_two";
     public static final String JSON_ARGUMENT_THREE = "argument_three";
     public static final String JSON_LINE_DATA = "line_data";
+    public static final String JSON_CONNECTOR_TYPE = "connector_type";
+    public static final String JSON_SOURCE_ID = "source_id";
+    public static final String JSON_DESTINATION_ID = "destination_id";
+    public static final String JSON_POINT_COORDINATES = "point_coordinates";
 
     /**
      * This method is for saving user work, which in the case of this
@@ -168,16 +169,15 @@ public class FileManager implements AppFileComponent {
 		.add(JSON_DIAGRAM_ID, diagram.getDiagramId())
 		.add(JSON_X_COORDINATE, diagram.getNameSection().getX() + 62.5)
 		.add(JSON_Y_COORDINATE, diagram.getNameSection().getY() + 15)
-                .add(JSON_WIDTH, diagram.getDiagramWidth())
-                .add(JSON_HEIGHT, diagram.getDiagramHeight())
 		.add(JSON_NAME_STRING, diagram.getNameText().getText())
                 .add(JSON_PACKAGE_NAME, diagram.getPackageName())
 		.add(JSON_IS_INTERFACE, diagram.isInterface() ? 1 : 0)
                 .add(JSON_IS_ABSTRACT, diagram.isAbstract()? 1 : 0)
+                .add(JSON_IS_ABRIGED, diagram.isAbriged()? 1 : 0)
                 .add(JSON_VARIABLE_DATA, buildVariableJsonArray(diagram.getVariableData()))
 		.add(JSON_METHOD_DATA, buildMethodJsonArray(diagram.getMethodData()))
                 .add(JSON_PARENT_ID, diagram.getParentId())
-                .add(JSON_LINE_DATA, buildPointJsonArray(diagram.getPointData()))
+                .add(JSON_LINE_DATA, buildConnectorJsonArray(diagram.getConnectorIdList()))
 		.build();
 	return jsonDiagram;
     }
@@ -189,7 +189,7 @@ public class FileManager implements AppFileComponent {
             JsonObject jsonVariable = Json.createObjectBuilder()
 		.add(JSON_VARIABLE_NAME, variable.getVariableName())
 		.add(JSON_TYPE_NAME, variable.getTypeName())
-		.add(JSON_IS_STATIC, variable.isStatic() ? 1 : 0)
+		.add(JSON_IS_STATIC, variable.isStatic())
 		.add(JSON_ACCESS_TYPE, variable.getAccessType())
 		.build();
            variableArray.add(jsonVariable);
@@ -204,8 +204,8 @@ public class FileManager implements AppFileComponent {
             JsonObject jsonMethod = Json.createObjectBuilder()
 		.add(JSON_METHOD_NAME, method.getMethodName())
 		.add(JSON_RETURN_TYPE, method.getReturnType())
-		.add(JSON_IS_STATIC, method.isStatic() ? 1 : 0)
-                .add(JSON_IS_ABSTRACT, method.isAbstract() ? 1 : 0)
+		.add(JSON_IS_STATIC, method.isStatic())
+                .add(JSON_IS_ABSTRACT, method.isAbstract())
 		.add(JSON_ACCESS_TYPE, method.getAccessType())
                 .add(JSON_ARGUMENT_ONE, method.getArgumentOne())
                 .add(JSON_ARGUMENT_TWO, method.getArgumentTwo())
@@ -216,19 +216,9 @@ public class FileManager implements AppFileComponent {
         return methodArray.build();
     }
     
-    private JsonArray buildPointJsonArray(ArrayList<List<Double>> pointData) {
-        JsonArrayBuilder lineArray = Json.createArrayBuilder();
-        for(int i = 0; i < pointData.size(); i++) {
-            JsonArrayBuilder pointArray = Json.createArrayBuilder();
-            for(int j = 0; j < pointData.get(i).size(); j++) {
-                JsonObject jsonPoint = Json.createObjectBuilder()
-                    .add(Integer.toString(j), pointData.get(i).get(j))
-                    .build();
-                pointArray.add(jsonPoint);
-            }
-            lineArray.add(pointArray.build());
-        }
-        return lineArray.build();
+    private JsonArray buildConnectorJsonArray(ArrayList<Integer> connectorId) {
+        JsonArrayBuilder connectorArray = Json.createArrayBuilder();
+        return connectorArray.build();
     }
     
     /**
@@ -311,19 +301,20 @@ public class FileManager implements AppFileComponent {
                 jsonObject.getInt(JSON_DIAGRAM_ID),
                 jsonObject.getInt(JSON_X_COORDINATE),
                 jsonObject.getInt(JSON_Y_COORDINATE),
-                jsonObject.getInt(JSON_WIDTH),
-                jsonObject.getInt(JSON_HEIGHT),
                 jsonObject.getString(JSON_NAME_STRING),
                 jsonObject.getString(JSON_PACKAGE_NAME),
                 jsonObject.getInt(JSON_IS_INTERFACE) == 1,
                 jsonObject.getInt(JSON_IS_ABSTRACT) == 1,
+                jsonObject.getInt(JSON_IS_ABRIGED) == 1,
                 buildVariableList(jsonObject.getJsonArray(JSON_VARIABLE_DATA)),
                 buildMethodList(jsonObject.getJsonArray(JSON_METHOD_DATA)),
                 jsonObject.getInt(JSON_PARENT_ID),
-                buildPointList(jsonObject.getJsonArray(JSON_LINE_DATA))
+                buildConnectorList(jsonObject.getJsonArray(JSON_LINE_DATA))
             );
-        diagram.updateVariableText();
-        diagram.updateMethodText();
+        if(!diagram.isAbriged()) {
+            diagram.updateVariableText();
+            diagram.updateMethodText();
+        }
         diagram.setStroke(Color.BLACK);
         diagram.setFill(Color.web("#e0eae1"));
         diagram.dynamicResize();
@@ -338,7 +329,7 @@ public class FileManager implements AppFileComponent {
             variableList.add(new Variable(
             jsonObject.getString(JSON_VARIABLE_NAME),
             jsonObject.getString(JSON_TYPE_NAME),
-            jsonObject.getInt(JSON_IS_STATIC) == 1,
+            jsonObject.getString(JSON_IS_STATIC),
             jsonObject.getString(JSON_ACCESS_TYPE)
             ));
 	}
@@ -352,8 +343,8 @@ public class FileManager implements AppFileComponent {
             methodList.add(new Method(
             jsonObject.getString(JSON_METHOD_NAME),
             jsonObject.getString(JSON_RETURN_TYPE),
-            jsonObject.getInt(JSON_IS_STATIC) == 1,
-            jsonObject.getInt(JSON_IS_ABSTRACT) == 1,
+            jsonObject.getString(JSON_IS_STATIC),
+            jsonObject.getString(JSON_IS_ABSTRACT),
             jsonObject.getString(JSON_ACCESS_TYPE),
             jsonObject.getString(JSON_ARGUMENT_ONE),
             jsonObject.getString(JSON_ARGUMENT_TWO),
@@ -363,16 +354,13 @@ public class FileManager implements AppFileComponent {
         return methodList;
     }
     
-    private ArrayList<List<Double>> buildPointList(JsonArray lineArray) {
-       ArrayList<List<Double>> pointData = new ArrayList();
+    private ArrayList<Integer> buildConnectorList(JsonArray lineArray) {
+       ArrayList<Integer> connectorList = new ArrayList<Integer>();
         for (int i = 0; i < lineArray.size(); i++) {
-            JsonArray pointArray = (JsonArray)lineArray.get(i);
-            for(int j = 0; j < pointArray.size(); j++) {
-                JsonObject jsonObject = pointArray.getJsonObject(j);
-                pointData.add(Arrays.asList((double)jsonObject.getInt(Integer.toString(j))));
-            }
+	    JsonObject jsonObject = lineArray.getJsonObject(i);
+            
 	}
-        return pointData;
+        return connectorList;
     }
     
         /**
