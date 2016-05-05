@@ -297,7 +297,7 @@ public class PageEditController {
                 else if(pane.getChildren().get(index) instanceof Connector) {
                     connector = (Connector)pane.getChildren().get(index);
                     connector.setStroke(Color.BLACK);
-                    connector.setAnchorDragEnabled(false);
+                    connector.setDragEnabled(false);
                 }
                 workspace.getNameTextField().setText("");
                 workspace.getPackageTextField().setText("");
@@ -330,7 +330,7 @@ public class PageEditController {
                 else if(pane.getChildren().get(index) instanceof Connector){
                     connector = (Connector)pane.getChildren().get(index);
                     connector.setStroke(Color.BLUE);
-                    connector.setAnchorDragEnabled(true);
+                    connector.setDragEnabled(true);
                     workspace.getNameTextField().setText("");
                     workspace.getPackageTextField().setText("");
                     workspace.getParentComboBox().setValue("");
@@ -758,9 +758,9 @@ public class PageEditController {
     private void finishAddingConnector(Diagram sourceDiagram, Diagram destinationDiagram, int option) {
         Workspace workspace = (Workspace) app.getWorkspaceComponent();
         Pane pane = workspace.getLeftPane();
-        connector = new Connector(-1, 80, sourceDiagram.getDiagramId(), destinationDiagram.getDiagramId(), 
-                sourceDiagram.getConnectionX(4).doubleValue(), sourceDiagram.getConnectionY(4).doubleValue(), 
-                destinationDiagram.getConnectionX(2).doubleValue(), destinationDiagram.getConnectionY(2).doubleValue());
+        connector = new Connector(-1, 10, sourceDiagram.getDiagramId(), destinationDiagram.getDiagramId(), 
+                sourceDiagram.getConnectionX(1).doubleValue(), sourceDiagram.getConnectionY(1).doubleValue(), 
+                destinationDiagram.getConnectionX(3).doubleValue(), destinationDiagram.getConnectionY(3).doubleValue());
         //connector.bindProperties(sourceDiagram.getConnectionX(1), sourceDiagram.getConnectionY(1),
                 //destinationDiagram.getConnectionX(3), destinationDiagram.getConnectionY(3));
         //connector.updateConnectorPath(linePath);

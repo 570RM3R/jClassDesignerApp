@@ -7,15 +7,19 @@ package jcd;
 
 import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
-import javafx.scene.Cursor;
+import javafx.geometry.Point2D;
 import javafx.scene.Group;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
-import javafx.scene.shape.Polygon;
+import javafx.scene.shape.Polyline;
 import javafx.scene.shape.StrokeType;
 
 /**
@@ -40,55 +44,56 @@ public class Connector extends Group{
         this.endX = endX;
         this.endY = endY;
         this.destinationId = destionationId;
-        double horizontalDistance = Math.abs(startX - endX) - 15;
-        double verticalDistance = Math.abs(startY - endY) -15;
+        double horizontalDistance = Math.abs(startX - endX) - 10;
+        double verticalDistance = Math.abs(startY - endY) -10;
         double length;
-        switch(type / 10) {
+        Line line;
+        Line previousLine;
+        switch(type / 100) {
             // Destination is straight top
             case 1:
                 // Six lines straight top
                 length = verticalDistance / 7;
                 for (int i = 0; i < 7; i++) {
-                    Line line = new Line();
-                    if (i == 0) {
-                        line.startXProperty().bind(new SimpleDoubleProperty(startX));
-                        line.startYProperty().bind(new SimpleDoubleProperty(startY));
-                    }
+                    line = new Line();
+                    Anchor anchor;
+                    if (i == 0)
+                        anchor = new Anchor(Color.BLACK, new SimpleDoubleProperty(startX), new SimpleDoubleProperty(startY));
                     else {
-                        Line previousLine = (Line)getChildren().get(getChildren().size()-2);
-                        line.startXProperty().bind(previousLine.endXProperty());
-                        line.startYProperty().bind(previousLine.endYProperty());
+                        previousLine = (Line)getChildren().get(getChildren().size()-1);
+                        anchor = new Anchor(Color.BLACK, previousLine.endXProperty(), previousLine.endYProperty());
                     }
+                    line.startXProperty().bind(anchor.centerXProperty());
+                    line.startYProperty().bind(anchor.centerYProperty());
                     line.endXProperty().bind(new SimpleDoubleProperty(startX));
                     line.endYProperty().bind(new SimpleDoubleProperty(startY - ((i+1) * length)));
-                    if(type % 10 == 1)
+                    if((type/10) % 10 == 1)
                         line.getStrokeDashArray().setAll(5.0, 5.0);
                     line.setMouseTransparent(true);
-                    getChildren().add(line);
-                    if (i != 6) {
-                        Anchor anchor = new Anchor(Color.BLACK, line.endXProperty(), line.endYProperty());
-                        getChildren().add(anchor);
-                    }
+                    getChildren().addAll(anchor, line);
                 }
+                previousLine = (Line)getChildren().get(getChildren().size()-1);
+                Head head = new Head(11, previousLine.endXProperty(), previousLine.endYProperty());
+                getChildren().add(head);
             break;
             // Destination is right top
             case 2:
                 // Two lines straight right
                 length = horizontalDistance / 4;
                 for (int i = 0; i < 2; i++) {
-                    Line line = new Line();
+                    line = new Line();
                     if (i == 0) {
                         line.startXProperty().bind(new SimpleDoubleProperty(startX));
                         line.startYProperty().bind(new SimpleDoubleProperty(startY));
                     }
                     else {
-                        Line previousLine = (Line)getChildren().get(getChildren().size()-2);
+                        previousLine = (Line)getChildren().get(getChildren().size()-2);
                         line.startXProperty().bind(previousLine.endXProperty());
                         line.startYProperty().bind(previousLine.endYProperty());
                     }
                     line.endXProperty().bind(new SimpleDoubleProperty(startX + (i + 1) * length));
                     line.endYProperty().bind(new SimpleDoubleProperty(startY));
-                    if(type % 10 == 1)
+                    if((type/10) % 10 == 1)
                         line.getStrokeDashArray().setAll(5.0, 5.0);
                     line.setMouseTransparent(true);
                     getChildren().add(line);
@@ -98,13 +103,13 @@ public class Connector extends Group{
                 // Three lines straight top
                 length = verticalDistance / 3;
                 for (int i = 0; i < 3; i++) {
-                    Line previousLine = (Line)getChildren().get(getChildren().size()-2);
-                    Line line = new Line();
+                    previousLine = (Line)getChildren().get(getChildren().size()-2);
+                    line = new Line();
                     line.startXProperty().bind(previousLine.endXProperty());
                     line.startYProperty().bind(previousLine.endYProperty());
                     line.endXProperty().bind(new SimpleDoubleProperty(previousLine.getEndX()));
                     line.endYProperty().bind(new SimpleDoubleProperty(previousLine.getEndY() - length));
-                    if(type % 10 == 1)
+                    if((type/10) % 10 == 1)
                         line.getStrokeDashArray().setAll(5.0, 5.0);
                     line.setMouseTransparent(true);
                     getChildren().add(line);
@@ -114,13 +119,13 @@ public class Connector extends Group{
                 // Two lines straight right
                 length = horizontalDistance / 4;
                 for (int i = 0; i < 2; i++) {
-                    Line line = new Line();
-                    Line previousLine = (Line)getChildren().get(getChildren().size()-2);
+                    line = new Line();
+                    previousLine = (Line)getChildren().get(getChildren().size()-2);
                     line.startXProperty().bind(previousLine.endXProperty());
                     line.startYProperty().bind(previousLine.endYProperty());
                     line.endXProperty().bind(new SimpleDoubleProperty(previousLine.getEndX() + length));
                     line.endYProperty().bind(new SimpleDoubleProperty(previousLine.getEndY()));
-                    if(type % 10 == 1)
+                    if((type/10) % 10 == 1)
                         line.getStrokeDashArray().setAll(5.0, 5.0);
                     line.setMouseTransparent(true);
                     getChildren().add(line);
@@ -135,19 +140,19 @@ public class Connector extends Group{
                 // Six lines straight right
                 length = horizontalDistance / 7;
                 for (int i = 0; i < 7; i++) {
-                    Line line = new Line();
+                    line = new Line();
                     if (i == 0) {
                         line.startXProperty().bind(new SimpleDoubleProperty(startX));
                         line.startYProperty().bind(new SimpleDoubleProperty(startY));
                     }
                     else {
-                        Line previousLine = (Line)getChildren().get(getChildren().size()-2);
+                        previousLine = (Line)getChildren().get(getChildren().size()-2);
                         line.startXProperty().bind(previousLine.endXProperty());
                         line.startYProperty().bind(previousLine.endYProperty());
                     }
                     line.endXProperty().bind(new SimpleDoubleProperty(startX + ((i+1) * length)));
                     line.endYProperty().bind(new SimpleDoubleProperty(startY));
-                    if(type % 10 == 1)
+                    if((type/10) % 10 == 1)
                         line.getStrokeDashArray().setAll(5.0, 5.0);
                     line.setMouseTransparent(true);
                     getChildren().add(line);
@@ -162,19 +167,19 @@ public class Connector extends Group{
                 // Two lines straight right
                 length = horizontalDistance / 4;
                 for (int i = 0; i < 2; i++) {
-                    Line line = new Line();
+                    line = new Line();
                     if (i == 0) {
                         line.startXProperty().bind(new SimpleDoubleProperty(startX));
                         line.startYProperty().bind(new SimpleDoubleProperty(startY));
                     }
                     else {
-                        Line previousLine = (Line)getChildren().get(getChildren().size()-2);
+                        previousLine = (Line)getChildren().get(getChildren().size()-2);
                         line.startXProperty().bind(previousLine.endXProperty());
                         line.startYProperty().bind(previousLine.endYProperty());
                     }
                     line.endXProperty().bind(new SimpleDoubleProperty(startX + (i + 1) * length));
                     line.endYProperty().bind(new SimpleDoubleProperty(startY));
-                    if(type % 10 == 1)
+                    if((type/10) % 10 == 1)
                         line.getStrokeDashArray().setAll(5.0, 5.0);
                     line.setMouseTransparent(true);
                     getChildren().add(line);
@@ -184,13 +189,13 @@ public class Connector extends Group{
                 // Three lines straight bottom
                 length = verticalDistance / 3;
                 for (int i = 0; i < 3; i++) {
-                    Line previousLine = (Line)getChildren().get(getChildren().size()-2);
-                    Line line = new Line();
+                    previousLine = (Line)getChildren().get(getChildren().size()-2);
+                    line = new Line();
                     line.startXProperty().bind(previousLine.endXProperty());
                     line.startYProperty().bind(previousLine.endYProperty());
                     line.endXProperty().bind(new SimpleDoubleProperty(previousLine.getEndX()));
                     line.endYProperty().bind(new SimpleDoubleProperty(previousLine.getEndY() + length));
-                    if(type % 10 == 1)
+                    if((type/10) % 10 == 1)
                         line.getStrokeDashArray().setAll(5.0, 5.0);
                     line.setMouseTransparent(true);
                     getChildren().add(line);
@@ -200,13 +205,13 @@ public class Connector extends Group{
                 // Two lines straight right
                 length = horizontalDistance / 4;
                 for (int i = 0; i < 2; i++) {
-                    Line line = new Line();
-                    Line previousLine = (Line)getChildren().get(getChildren().size()-2);
+                    line = new Line();
+                    previousLine = (Line)getChildren().get(getChildren().size()-2);
                     line.startXProperty().bind(previousLine.endXProperty());
                     line.startYProperty().bind(previousLine.endYProperty());
                     line.endXProperty().bind(new SimpleDoubleProperty(previousLine.getEndX() + length));
                     line.endYProperty().bind(new SimpleDoubleProperty(previousLine.getEndY()));
-                    if(type % 10 == 1)
+                    if((type/10) % 10 == 1)
                         line.getStrokeDashArray().setAll(5.0, 5.0);
                     line.setMouseTransparent(true);
                     getChildren().add(line);
@@ -221,19 +226,19 @@ public class Connector extends Group{
                 // Six lines straight bottom
                 length = verticalDistance / 7;
                 for (int i = 0; i < 7; i++) {
-                    Line line = new Line();
+                    line = new Line();
                     if (i == 0) {
                         line.startXProperty().bind(new SimpleDoubleProperty(startX));
                         line.startYProperty().bind(new SimpleDoubleProperty(startY));
                     }
                     else {
-                        Line previousLine = (Line)getChildren().get(getChildren().size()-2);
+                        previousLine = (Line)getChildren().get(getChildren().size()-2);
                         line.startXProperty().bind(previousLine.endXProperty());
                         line.startYProperty().bind(previousLine.endYProperty());
                     }
                     line.endXProperty().bind(new SimpleDoubleProperty(startX));
                     line.endYProperty().bind(new SimpleDoubleProperty(startY + ((i+1) * length)));
-                    if(type % 10 == 1)
+                    if((type/10) % 10 == 1)
                         line.getStrokeDashArray().setAll(5.0, 5.0);
                     line.setMouseTransparent(true);
                     getChildren().add(line);
@@ -248,19 +253,19 @@ public class Connector extends Group{
                 // Two lines straight left
                 length = horizontalDistance / 4;
                 for (int i = 0; i < 2; i++) {
-                    Line line = new Line();
+                    line = new Line();
                     if (i == 0) {
                         line.startXProperty().bind(new SimpleDoubleProperty(startX));
                         line.startYProperty().bind(new SimpleDoubleProperty(startY));
                     }
                     else {
-                        Line previousLine = (Line)getChildren().get(getChildren().size()-2);
+                        previousLine = (Line)getChildren().get(getChildren().size()-2);
                         line.startXProperty().bind(previousLine.endXProperty());
                         line.startYProperty().bind(previousLine.endYProperty());
                     }
                     line.endXProperty().bind(new SimpleDoubleProperty(startX - (i + 1) * length));
                     line.endYProperty().bind(new SimpleDoubleProperty(startY));
-                    if(type % 10 == 1)
+                    if((type/10) % 10 == 1)
                         line.getStrokeDashArray().setAll(5.0, 5.0);
                     line.setMouseTransparent(true);
                     getChildren().add(line);
@@ -270,13 +275,13 @@ public class Connector extends Group{
                 // Three lines straight bottom
                 length = verticalDistance / 3;
                 for (int i = 0; i < 3; i++) {
-                    Line previousLine = (Line)getChildren().get(getChildren().size()-2);
-                    Line line = new Line();
+                    previousLine = (Line)getChildren().get(getChildren().size()-2);
+                    line = new Line();
                     line.startXProperty().bind(previousLine.endXProperty());
                     line.startYProperty().bind(previousLine.endYProperty());
                     line.endXProperty().bind(new SimpleDoubleProperty(previousLine.getEndX()));
                     line.endYProperty().bind(new SimpleDoubleProperty(previousLine.getEndY() + length));
-                    if(type % 10 == 1)
+                    if((type/10) % 10 == 1)
                         line.getStrokeDashArray().setAll(5.0, 5.0);
                     line.setMouseTransparent(true);
                     getChildren().add(line);
@@ -286,13 +291,13 @@ public class Connector extends Group{
                 // Two lines straight left
                 length = horizontalDistance / 4;
                 for (int i = 0; i < 2; i++) {
-                    Line line = new Line();
-                    Line previousLine = (Line)getChildren().get(getChildren().size()-2);
+                    line = new Line();
+                    previousLine = (Line)getChildren().get(getChildren().size()-2);
                     line.startXProperty().bind(previousLine.endXProperty());
                     line.startYProperty().bind(previousLine.endYProperty());
                     line.endXProperty().bind(new SimpleDoubleProperty(previousLine.getEndX() - length));
                     line.endYProperty().bind(new SimpleDoubleProperty(previousLine.getEndY()));
-                    if(type % 10 == 1)
+                    if((type/10) % 10 == 1)
                         line.getStrokeDashArray().setAll(5.0, 5.0);
                     line.setMouseTransparent(true);
                     getChildren().add(line);
@@ -307,19 +312,19 @@ public class Connector extends Group{
                 // Six lines straight right
                 length = horizontalDistance / 7;
                 for (int i = 0; i < 7; i++) {
-                    Line line = new Line();
+                    line = new Line();
                     if (i == 0) {
                         line.startXProperty().bind(new SimpleDoubleProperty(startX));
                         line.startYProperty().bind(new SimpleDoubleProperty(startY));
                     }
                     else {
-                        Line previousLine = (Line)getChildren().get(getChildren().size()-2);
+                        previousLine = (Line)getChildren().get(getChildren().size()-2);
                         line.startXProperty().bind(previousLine.endXProperty());
                         line.startYProperty().bind(previousLine.endYProperty());
                     }
                     line.endXProperty().bind(new SimpleDoubleProperty(startX - ((i+1) * length)));
                     line.endYProperty().bind(new SimpleDoubleProperty(startY));
-                    if(type % 10 == 1)
+                    if((type/10) % 10 == 1)
                         line.getStrokeDashArray().setAll(5.0, 5.0);
                     line.setMouseTransparent(true);
                     getChildren().add(line);
@@ -334,19 +339,19 @@ public class Connector extends Group{
                 // Two lines straight left
                 length = horizontalDistance / 4;
                 for (int i = 0; i < 2; i++) {
-                    Line line = new Line();
+                    line = new Line();
                     if (i == 0) {
                         line.startXProperty().bind(new SimpleDoubleProperty(startX));
                         line.startYProperty().bind(new SimpleDoubleProperty(startY));
                     }
                     else {
-                        Line previousLine = (Line)getChildren().get(getChildren().size()-2);
+                        previousLine = (Line)getChildren().get(getChildren().size()-2);
                         line.startXProperty().bind(previousLine.endXProperty());
                         line.startYProperty().bind(previousLine.endYProperty());
                     }
                     line.endXProperty().bind(new SimpleDoubleProperty(startX - (i + 1) * length));
                     line.endYProperty().bind(new SimpleDoubleProperty(startY));
-                    if(type % 10 == 1)
+                    if((type/10) % 10 == 1)
                         line.getStrokeDashArray().setAll(5.0, 5.0);
                     line.setMouseTransparent(true);
                     getChildren().add(line);
@@ -356,13 +361,13 @@ public class Connector extends Group{
                 // Three lines straight top
                 length = verticalDistance / 3;
                 for (int i = 0; i < 3; i++) {
-                    Line previousLine = (Line)getChildren().get(getChildren().size()-2);
-                    Line line = new Line();
+                    previousLine = (Line)getChildren().get(getChildren().size()-2);
+                    line = new Line();
                     line.startXProperty().bind(previousLine.endXProperty());
                     line.startYProperty().bind(previousLine.endYProperty());
                     line.endXProperty().bind(new SimpleDoubleProperty(previousLine.getEndX()));
                     line.endYProperty().bind(new SimpleDoubleProperty(previousLine.getEndY() - length));
-                    if(type % 10 == 1)
+                    if((type/10) % 10 == 1)
                         line.getStrokeDashArray().setAll(5.0, 5.0);
                     line.setMouseTransparent(true);
                     getChildren().add(line);
@@ -372,13 +377,13 @@ public class Connector extends Group{
                 // Two lines straight left
                 length = horizontalDistance / 4;
                 for (int i = 0; i < 2; i++) {
-                    Line line = new Line();
-                    Line previousLine = (Line)getChildren().get(getChildren().size()-2);
+                    line = new Line();
+                    previousLine = (Line)getChildren().get(getChildren().size()-2);
                     line.startXProperty().bind(previousLine.endXProperty());
                     line.startYProperty().bind(previousLine.endYProperty());
                     line.endXProperty().bind(new SimpleDoubleProperty(previousLine.getEndX() - length));
                     line.endYProperty().bind(new SimpleDoubleProperty(previousLine.getEndY()));
-                    if(type % 10 == 1)
+                    if((type/10) % 10 == 1)
                         line.getStrokeDashArray().setAll(5.0, 5.0);
                     line.setMouseTransparent(true);
                     getChildren().add(line);
@@ -420,16 +425,24 @@ public class Connector extends Group{
                 Line line = (Line)getChildren().get(i);
                 line.setStroke(color);
             }
-            else {
+            else if(getChildren().get(i) instanceof Anchor) {
                Anchor anchor = (Anchor)getChildren().get(i);
                anchor.setFillAndStroke(color);
             }
+            else {
+                Head head = (Head)getChildren().get(i);
+                head.setFillAndStroke(color);
+            }
         }
     }
-    public void setAnchorDragEnabled(boolean isDragEnabled) {
+    public void setDragEnabled(boolean isDragEnabled) {
         for(int i = 0; i < getChildren().size(); i++) {
             if(getChildren().get(i) instanceof Anchor) {
                 Anchor anchor = (Anchor)getChildren().get(i);
+                anchor.setDragEnabled(isDragEnabled);
+            }
+            else if(getChildren().get(i) instanceof Head) {
+                Head anchor = (Head)getChildren().get(i);
                 anchor.setDragEnabled(isDragEnabled);
             }
         }
@@ -449,7 +462,7 @@ public class Connector extends Group{
         Anchor(Color color, DoubleProperty x, DoubleProperty y) {
             super(x.get(), y.get(), 0.5);
             setFillAndStroke(color);
-            setStrokeWidth(2);
+            setStrokeWidth(1);
             setStrokeType(StrokeType.OUTSIDE);
             x.bind(centerXProperty());
             y.bind(centerYProperty());
@@ -466,15 +479,6 @@ public class Connector extends Group{
                     if(isDragEnabled) {
                         dragDelta.x = getCenterX() - mouseEvent.getX();
                         dragDelta.y = getCenterY() - mouseEvent.getY();
-                        getScene().setCursor(Cursor.MOVE);
-                    }
-                }
-            });
-            setOnMouseReleased(new EventHandler<MouseEvent>() {
-                @Override
-                public void handle(MouseEvent mouseEvent) {
-                    if(isDragEnabled) {
-                        getScene().setCursor(Cursor.HAND);
                     }
                 }
             });
@@ -490,22 +494,6 @@ public class Connector extends Group{
                         if (newY > 0 && newY < getScene().getHeight()) {
                             setCenterY(newY);
                         }
-                    }
-                }
-            });
-            setOnMouseEntered(new EventHandler<MouseEvent>() {
-                @Override
-                public void handle(MouseEvent mouseEvent) {
-                    if (!mouseEvent.isPrimaryButtonDown() && isDragEnabled) {
-                        getScene().setCursor(Cursor.HAND);
-                    }
-                }
-            });
-            setOnMouseExited(new EventHandler<MouseEvent>() {
-                @Override
-                public void handle(MouseEvent mouseEvent) {
-                    if (!mouseEvent.isPrimaryButtonDown() && isDragEnabled) {
-                        getScene().setCursor(Cursor.DEFAULT);
                     }
                 }
             });
@@ -526,58 +514,117 @@ public class Connector extends Group{
         }
     }
     
-    class Head extends Polygon{
-        public Head(int type) {
+    class Head extends Polyline{
+        int type;
+        boolean isDragEnabled;
+        public Head(int type, DoubleProperty x, DoubleProperty y) {
+            this.type = type;
+            isDragEnabled = false;
+            ObservableList<Double> points = FXCollections.observableArrayList();
             switch(type) {
                 // Triangle up
                 case 1:
-                    getPoints().addAll(new Double[]{0.0, 0.0, 20.0, 10.0, 10.0, 20.0 });
+                    points.addAll(x.get(), y.get(), x.get()+5, y.get(), x.get(), y.get()-10, x.get()-5, y.get(), x.get(), y.get());
+                    getPoints().addAll(points);
+                    setFill(Color.BLACK);
                     break;
                 // Triangle right
                 case 2:
-                    getPoints().addAll(new Double[]{0.0, 0.0, 20.0, 10.0, 10.0, 20.0 });
+                    points.addAll(x.get(), y.get(), x.get(), y.get()-5, x.get()+10, y.get(), x.get(), y.get()+5, x.get(), y.get());
+                    getPoints().addAll(points);
+                    setFill(Color.BLACK);
                     break;
                 // Triangle down
                 case 3:
-                    getPoints().addAll(new Double[]{0.0, 0.0, 20.0, 10.0, 10.0, 20.0 });
+                    points.addAll(x.get(), y.get(), x.get()+5, y.get(), x.get(), y.get()+10, x.get()-5, y.get(), x.get(), y.get());
+                    getPoints().addAll(points);
+                    setFill(Color.BLACK);
                     break;
                 // Triangle left
                 case 4:
-                    getPoints().addAll(new Double[]{0.0, 0.0, 20.0, 10.0, 10.0, 20.0 });
+                    points.addAll(x.get(), y.get(), x.get(), y.get()-5, x.get()-10, y.get(), x.get(), y.get()+5, x.get(), y.get());
+                    getPoints().addAll(points);
+                    setFill(Color.BLACK);
                     break;
                 // Diamond up
                 case 5:
-                    getPoints().addAll(new Double[]{0.0, 0.0, 20.0, 10.0, 10.0, 20.0 });
+                    points.addAll(x.get(), y.get(), x.get()+2.5, y.get()-5, x.get(), y.get()-10, x.get()-2.5, y.get()-5, x.get(), y.get());
+                    getPoints().addAll(points);
+                    setFill(Color.BLACK);
                     break;
                 // Diamond right
                 case 6:
-                    getPoints().addAll(new Double[]{0.0, 0.0, 20.0, 10.0, 10.0, 20.0 });
+                    points.addAll(x.get(), y.get(), x.get()+5, y.get()-2.5, x.get()+10, y.get(), x.get()+5, y.get()+2.5, x.get(), y.get());
+                    getPoints().addAll(points);
+                    setFill(Color.BLACK);
                     break;
                 // Diamond down
                 case 7:
-                    getPoints().addAll(new Double[]{0.0, 0.0, 20.0, 10.0, 10.0, 20.0 });
+                    points.addAll(x.get(), y.get(), x.get()+2.5, y.get()+5, x.get(), y.get()+10, x.get()-2.5, y.get()+5, x.get(), y.get());
+                    getPoints().addAll(points);
+                    setFill(Color.BLACK);
                     break;
                 // Diamond left
                 case 8:
-                    getPoints().addAll(new Double[]{0.0, 0.0, 20.0, 10.0, 10.0, 20.0 });
+                    points.addAll(x.get(), y.get(), x.get()-5, y.get()-2.5, x.get()-10, y.get(), x.get()-5, y.get()+2.5, x.get(), y.get());
+                    getPoints().addAll(points);
+                    setFill(Color.BLACK);
                     break;
                 // Arrow Up
                 case 9:
-                    getPoints().addAll(new Double[]{0.0, 0.0, 20.0, 10.0, 10.0, 20.0 });
+                    points.addAll(x.get(), y.get(), x.get(), y.get()-10, x.get()-5, y.get(), x.get(), y.get()-10, x.get()+5, y.get(), x.get(), y.get()-10);
+                    getPoints().addAll(points);
                     break;
                 // Arrow right
                 case 10:
-                    getPoints().addAll(new Double[]{0.0, 0.0, 20.0, 10.0, 10.0, 20.0 });
+                    points.addAll(x.get(), y.get(), x.get()+10, y.get(), x.get(), y.get()-5, x.get()+10, y.get(), x.get(), y.get()+5, x.get()+10, y.get());
+                    getPoints().addAll(points);
                     break;
                 // Arrow down
                 case 11:
-                    getPoints().addAll(new Double[]{0.0, 0.0, 20.0, 10.0, 10.0, 20.0 });
+                    points.addAll(x.get(), y.get(), x.get(), y.get()+10, x.get()-5, y.get(), x.get(), y.get()+10, x.get()+5, y.get(), x.get(), y.get()+10);
+                    getPoints().addAll(points);
                     break;
                 // Arrow left
                 case 12:
-                    getPoints().addAll(new Double[]{0.0, 0.0, 20.0, 10.0, 10.0, 20.0 });
+                    points.addAll(x.get(), y.get(), x.get()-10, y.get(), x.get(), y.get()-5, x.get()-10, y.get(), x.get(), y.get()+5, x.get()-10, y.get());
+                    getPoints().addAll(points);
                     break;
             }
+            x.bind(layoutXProperty().add(x.get()));
+            y.bind(layoutYProperty().add(y.get()));
+            enableDrag();
+        }
+        private void enableDrag() {
+            final ObjectProperty<Point2D> mousePosition = new SimpleObjectProperty<>();
+            setOnMousePressed(new EventHandler<MouseEvent>() {
+                @Override
+                public void handle(MouseEvent mouseEvent) {
+                    if(isDragEnabled) {
+                        mousePosition.set(new Point2D(mouseEvent.getSceneX(), mouseEvent.getSceneY()));
+                    }
+                }
+            });
+            setOnMouseDragged(new EventHandler<MouseEvent>() {
+                @Override
+                public void handle(MouseEvent mouseEvent) {
+                    if(isDragEnabled) {
+                        double deltaX = mouseEvent.getSceneX() - mousePosition.get().getX();
+                        double deltaY = mouseEvent.getSceneY() - mousePosition.get().getY();
+                        setLayoutX(getLayoutX()+deltaX);
+                        setLayoutY(getLayoutY()+deltaY);
+                        mousePosition.set(new Point2D(mouseEvent.getSceneX(), mouseEvent.getSceneY()));
+                    }
+                }
+            });
+        }
+        public void setDragEnabled(boolean isDragEnabled) {
+            this.isDragEnabled = isDragEnabled;
+        }
+        private void setFillAndStroke(Color color) {
+            if(type != 9 && type != 10 && type != 11 && type != 12)
+                setFill(color.deriveColor(1, 1, 1, 1));
+            setStroke(color);
         }
     }
     
