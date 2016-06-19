@@ -107,8 +107,6 @@ public class Workspace extends AppWorkspaceComponent {
     Button removeDiagramButton;
     Button undoButton;
     Button redoButton;
-//    Button zoomInButton;
-//    Button zoomOutButton;
     Slider zoomSlider;
     CheckBox gridCheckBox;
     CheckBox snapCheckBox;  
@@ -193,8 +191,6 @@ public class Workspace extends AppWorkspaceComponent {
         undoButton = gui.initChildButton(gui.getToolbarPane(), UNDO_ICON.toString(), UNDO_TOOLTIP.toString(), false);
         redoButton = gui.initChildButton(gui.getToolbarPane(), REDO_ICON.toString(), REDO_TOOLTIP.toString(), false);
         gui.getToolbarPane().getChildren().add(new Separator(VERTICAL));
-        //zoomInButton = gui.initChildButton(gui.getToolbarPane(), ZOOM_IN_ICON.toString(), ZOOM_IN_TOOLTIP.toString(), false);
-        //zoomOutButton = gui.initChildButton(gui.getToolbarPane(), ZOOM_OUT_ICON.toString(), ZOOM_OUT_TOOLTIP.toString(), false);
         zoomSlider = new Slider(0.5,2,1);
         zoomingPane.zoomFactorProperty().bind(zoomSlider.valueProperty());
         gridCheckBox = new CheckBox("Grid");
@@ -352,12 +348,6 @@ public class Workspace extends AppWorkspaceComponent {
         redoButton.setOnAction(e -> {
             pageEditController.handleRedoRequest();
         });
-//        zoomInButton.setOnAction(e -> {
-//            pageEditController.handleZoomInRequest();
-//        });
-//        zoomOutButton.setOnAction(e -> {
-//            pageEditController.handleZoomOutRequest();
-//        });
         helpButton.setOnAction(e -> {
             pageEditController.handleHelpRequest();
         });
@@ -448,6 +438,7 @@ public class Workspace extends AppWorkspaceComponent {
         dataManager.setLeftPane(leftPane);
         workspaceSplitPane.getItems().addAll(leftScrollPane, rightPane);
         workspace.getChildren().add(workspaceSplitPane);
+        app.getGUI().updateToolbarControls("1100001.0000000");
         reloadWorkspace(-1);
         
     }
@@ -470,8 +461,8 @@ public class Workspace extends AppWorkspaceComponent {
     
     public ComboBox getParentComboBox() {
         return parentComboBox;
-    }   
-    
+    }
+ 
     /**
      * This function specifies the CSS style classes for all the UI components
      * known at the time the workspace is initially constructed. Note that the

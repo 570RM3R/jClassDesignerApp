@@ -23,6 +23,13 @@ public class Variable {
         this.isStatic = isStatic;
         this.accessType = accessType;
     }
+    // Copy constructor
+    public Variable(Variable variable) {
+        variableName = variable.getVariableName();
+        typeName = variable.getTypeName();
+        isStatic = variable.isStatic();
+        accessType = variable.getAccessType();
+    }
     
     public String getVariableName() {
         return variableName;

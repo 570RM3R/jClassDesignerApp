@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.scene.Node;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javax.json.Json;
@@ -27,6 +28,9 @@ import javax.json.JsonReader;
 import javax.json.JsonWriter;
 import javax.json.JsonWriterFactory;
 import javax.json.stream.JsonGenerator;
+import jcd.Connector;
+import jcd.Connector.Anchor;
+import jcd.Connector.Head;
 import jcd.Diagram;
 import jcd.Method;
 import jcd.Variable;
@@ -49,17 +53,22 @@ public class FileManager implements AppFileComponent {
     public static final String JSON_FILE = "data.json";
     public static final String PATH_TEMP = "./temp/";
     public static final String TEMP_PAGE = PATH_TEMP + JSON_FILE;
-    public static final String JSON_DIAGRAM_COLLECTION = "diagram_collections";
-    public static final String JSON_ID_COUNTER = "id_counter";
-    public static final String JSON_DIAGRAM_ID = "diagram_id";
-    public static final String JSON_X_COORDINATE = "x_coordinate";
-    public static final String JSON_Y_COORDINATE = "y_coordinate";
-    public static final String JSON_NAME_STRING = "name_string";
+    public static final String JSON_JCLASS_DESIGNER_DATA = "jClass Designer Data";
+    public static final String JSON_DIAGRAM_ID_COUNTER = "diagram_id_counter";
+    public static final String JSON_CONNECTOR_ID_COUNTER = "connector_id_counter";
+    public static final String JSON_ID = "id";
+    public static final String JSON_TYPE = "type";
+    public static final String JSON_X = "x";
+    public static final String JSON_Y = "y";
+    public static final String JSON_NAME = "name";
     public static final String JSON_IS_INTERFACE = "is_interface";
     public static final String JSON_PACKAGE_NAME = "package_name";
     public static final String JSON_VARIABLE_DATA = "variable_data";
     public static final String JSON_METHOD_DATA = "method_data";
-    public static final String JSON_PARENT_ID = "parent_id";
+    public static final String JSON_INHERITANCE_DATA = "inheritance_data";
+    public static final String JSON_AGGREGATION_DATA = "aggregation_data";
+    public static final String JSON_RELATIONSHIP_DATA = "relationship_data";
+    public static final String JSON_CONNECTOR_DATA = "connector_data";
     public static final String JSON_VARIABLE_NAME = "variable_name";
     public static final String JSON_TYPE_NAME = "type_name";
     public static final String JSON_IS_STATIC = "is_static";
@@ -71,11 +80,15 @@ public class FileManager implements AppFileComponent {
     public static final String JSON_ARGUMENT_ONE = "argument_one";
     public static final String JSON_ARGUMENT_TWO = "argument_two";
     public static final String JSON_ARGUMENT_THREE = "argument_three";
-    public static final String JSON_LINE_DATA = "line_data";
-    public static final String JSON_CONNECTOR_TYPE = "connector_type";
     public static final String JSON_SOURCE_ID = "source_id";
     public static final String JSON_DESTINATION_ID = "destination_id";
-    public static final String JSON_POINT_COORDINATES = "point_coordinates";
+    public static final String JSON_START_X = "start_x";
+    public static final String JSON_START_Y = "start_y";
+    public static final String JSON_END_X = "end_x";
+    public static final String JSON_END_Y = "end_y";
+    public static final String JSON_HEAD_LAYOUTX = "head_layoutX";
+    public static final String JSON_HEAD_LAYOUTY = "head_layoutY";
+    public static final String JSON_ANCHOR_DATA = "anchor_data";
 
     /**
      * This method is for saving user work, which in the case of this
@@ -99,50 +112,23 @@ public class FileManager implements AppFileComponent {
 	// THEN THE TREE
 	JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
         for (int i = 0; i < pane.getChildren().size(); i++) {
-            JsonObject diagram = makeDiagramJsonObject((Diagram)pane.getChildren().get(i));
-            arrayBuilder.add(diagram);
+            if (pane.getChildren().get(i) instanceof Diagram) {
+                JsonObject diagram = makeDiagramJsonObject((Diagram)pane.getChildren().get(i));
+                arrayBuilder.add(diagram);
+            }
+            else if (pane.getChildren().get(i) instanceof Connector) {
+                JsonObject connector = makeConnectorJsonObject((Connector)pane.getChildren().get(i));
+                arrayBuilder.add(connector);
+            }
         }
         
 	JsonArray nodesArray = arrayBuilder.build();
 	
 	// THEN PUT IT ALL TOGETHER IN A JsonObject
 	JsonObject dataManagerJSO = Json.createObjectBuilder()
-		.add(JSON_DIAGRAM_COLLECTION, nodesArray)
-                .add(JSON_ID_COUNTER, Diagram.getIdCounter())
-		.build();
-	
-	// AND NOW OUTPUT IT TO A JSON FILE WITH PRETTY PRINTING
-	Map<String, Object> properties = new HashMap<>(1);
-	properties.put(JsonGenerator.PRETTY_PRINTING, true);
-	JsonWriterFactory writerFactory = Json.createWriterFactory(properties);
-	JsonWriter jsonWriter = writerFactory.createWriter(sw);
-	jsonWriter.writeObject(dataManagerJSO);
-	jsonWriter.close();
-
-	// INIT THE WRITER
-	OutputStream os = new FileOutputStream(filePath);
-	JsonWriter jsonFileWriter = Json.createWriter(os);
-	jsonFileWriter.writeObject(dataManagerJSO);
-	String prettyPrinted = sw.toString();
-	PrintWriter pw = new PrintWriter(filePath);
-	pw.write(prettyPrinted);
-	pw.close();
-    }
-    
-    public void saveDataTest (ObservableList<Diagram> diagramData, String filePath) throws IOException {
-        StringWriter sw = new StringWriter();
-	// THEN THE TREE
-	JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
-        for (int i = 0; i < diagramData.size(); i++) {
-            JsonObject diagram = makeDiagramJsonObject((Diagram)diagramData.get(i));
-            arrayBuilder.add(diagram);
-        } 
-	JsonArray nodesArray = arrayBuilder.build();
-	
-	// THEN PUT IT ALL TOGETHER IN A JsonObject
-	JsonObject dataManagerJSO = Json.createObjectBuilder()
-		.add(JSON_DIAGRAM_COLLECTION, nodesArray)
-                .add(JSON_ID_COUNTER, Diagram.getIdCounter())
+		.add(JSON_JCLASS_DESIGNER_DATA, nodesArray)
+                .add(JSON_DIAGRAM_ID_COUNTER, Diagram.getIdCounter())
+                .add(JSON_CONNECTOR_ID_COUNTER, Connector.getIdCounter())
 		.build();
 	
 	// AND NOW OUTPUT IT TO A JSON FILE WITH PRETTY PRINTING
@@ -166,20 +152,40 @@ public class FileManager implements AppFileComponent {
     // HELPER METHOD FOR SAVING DATA TO A JSON FORMAT
     private JsonObject makeDiagramJsonObject(Diagram diagram) {
 	JsonObject jsonDiagram = Json.createObjectBuilder()
-		.add(JSON_DIAGRAM_ID, diagram.getDiagramId())
-		.add(JSON_X_COORDINATE, diagram.getNameSection().getX() + 62.5)
-		.add(JSON_Y_COORDINATE, diagram.getNameSection().getY() + 15)
-		.add(JSON_NAME_STRING, diagram.getNameText().getText())
+		.add(JSON_ID, 'D' + Integer.toString(diagram.getDiagramId()))
+		.add(JSON_X, diagram.getNameSection().getX() + 66.5)
+		.add(JSON_Y, diagram.getNameSection().getY() + 15)
+		.add(JSON_NAME, diagram.getNameText().getText())
                 .add(JSON_PACKAGE_NAME, diagram.getPackageName())
 		.add(JSON_IS_INTERFACE, diagram.isInterface() ? 1 : 0)
                 .add(JSON_IS_ABSTRACT, diagram.isAbstract()? 1 : 0)
                 .add(JSON_IS_ABRIGED, diagram.isAbriged()? 1 : 0)
                 .add(JSON_VARIABLE_DATA, buildVariableJsonArray(diagram.getVariableData()))
 		.add(JSON_METHOD_DATA, buildMethodJsonArray(diagram.getMethodData()))
-                .add(JSON_PARENT_ID, diagram.getParentId())
-                .add(JSON_LINE_DATA, buildConnectorJsonArray(diagram.getConnectorIdList()))
+                .add(JSON_INHERITANCE_DATA, buildDataString(diagram.getInheritanceData()))
+                .add(JSON_AGGREGATION_DATA, buildDataString(diagram.getAggregationData()))
+                .add(JSON_RELATIONSHIP_DATA, buildDataString(diagram.getRelationshipData()))
+                .add(JSON_CONNECTOR_DATA, buildDataString(diagram.getConnectorData()))
 		.build();
 	return jsonDiagram;
+    }
+    
+    // HELPER METHOD FOR SAVING DATA TO A JSON FORMAT
+    private JsonObject makeConnectorJsonObject(Connector connector) {
+	JsonObject jsonConnector = Json.createObjectBuilder()
+		.add(JSON_ID, 'C' + Integer.toString(connector.getConnectorId()))
+                .add(JSON_TYPE, connector.getType())
+		.add(JSON_SOURCE_ID, connector.getSourceId())
+		.add(JSON_DESTINATION_ID, connector.getDestinationId())
+		.add(JSON_START_X, connector.getStartX())
+                .add(JSON_START_Y, connector.getStartY())
+		.add(JSON_END_X, connector.getEndX())
+                .add(JSON_END_Y, connector.getEndY())
+                .add(JSON_HEAD_LAYOUTX, connector.getHeadLayoutX())
+                .add(JSON_HEAD_LAYOUTY, connector.getHeadLayoutY())
+                .add(JSON_ANCHOR_DATA, buildAnchorDataString(connector.getAnchorData()))
+		.build();
+	return jsonConnector;
     }
     
     // HELPER METHOD FOR SAVING DATA TO A JSON FORMAT
@@ -215,10 +221,24 @@ public class FileManager implements AppFileComponent {
         }
         return methodArray.build();
     }
+    private String buildAnchorDataString(ArrayList<Double> anchorData) {
+        String anchorDataString = Double.toString(anchorData.get(0));
+        for (int i = 1; i < anchorData.size(); i++) {
+            anchorDataString += ", " + anchorData.get(i);
+        }
+        return anchorDataString;
+    }
     
-    private JsonArray buildConnectorJsonArray(ArrayList<Integer> connectorId) {
-        JsonArrayBuilder connectorArray = Json.createArrayBuilder();
-        return connectorArray.build();
+    private String buildDataString(ArrayList<Integer> data) {
+        String dataString = "";
+        if(!data.isEmpty()) {
+            dataString = Integer.toString(data.get(0));
+        }
+        for (int i = 1; i < data.size(); i++) {
+            dataString += ", ";
+            dataString += data.get(i);
+        }
+        return dataString;
     }
     
     /**
@@ -245,23 +265,14 @@ public class FileManager implements AppFileComponent {
 	// LOAD THE JSON FILE WITH ALL THE DATA
 	JsonObject json = loadJSONFile(filePath);
         
-        Diagram.setIdCounter(json.getInt(JSON_ID_COUNTER));
+        Diagram.setIdCounter(json.getInt(JSON_DIAGRAM_ID_COUNTER));
+        Connector.setIdCounter(json.getInt(JSON_CONNECTOR_ID_COUNTER));
         
 	// LOAD THE TAG TREE
-	JsonArray jsonPoseArray = json.getJsonArray(JSON_DIAGRAM_COLLECTION);
-	loadDiagramObjects(jsonPoseArray, dataManager);
+	JsonArray jsonClassArray = json.getJsonArray(JSON_JCLASS_DESIGNER_DATA);
+	loadClassObjects(jsonClassArray, dataManager);
     }
     
-        public ObservableList<Diagram> loadDataTest(String filePath) throws IOException {
-	// LOAD THE JSON FILE WITH ALL THE DATA
-	JsonObject json = loadJSONFile(filePath);
-        
-        Diagram.setIdCounter(json.getInt(JSON_ID_COUNTER));
-        
-	// LOAD THE TAG TREE
-	JsonArray jsonPoseArray = json.getJsonArray(JSON_DIAGRAM_COLLECTION);
-	return loadDiagramObjectsTest(jsonPoseArray);
-    }
 
     // HELPER METHOD FOR LOADING DATA FROM A JSON FORMAT
     private JsonObject loadJSONFile(String jsonFilePath) throws IOException {
@@ -275,51 +286,56 @@ public class FileManager implements AppFileComponent {
     }
     
     // HELPER METHOD FOR LOADING DATA FROM A JSON FORMAT
-    private void loadDiagramObjects(JsonArray jsonTagsArray, DataManager dataManager) {
+    private void loadClassObjects(JsonArray jsonTagsArray, DataManager dataManager) {
         Pane pane = dataManager.getLeftPane();
 	// AND NOW JUST GO THROUGH THE REST OF THE ARRAY
 	for (int i = 0; i < jsonTagsArray.size(); i++) {
 	    JsonObject jsonObject = jsonTagsArray.getJsonObject(i);
-            pane.getChildren().add(loadDiagram(jsonObject)); 
+            if(jsonObject.getString(JSON_ID).charAt(0) == 'D')
+                pane.getChildren().add(loadDiagram(jsonObject)); 
+            else if(jsonObject.getString(JSON_ID).charAt(0) == 'C')
+                pane.getChildren().add(loadConnector(jsonObject));
 	}
-    }
-    
-    // HELPER METHOD FOR LOADING DATA FROM A JSON FORMAT
-    private ObservableList<Diagram> loadDiagramObjectsTest(JsonArray jsonTagsArray) {
-        ObservableList<Diagram> diagramData = FXCollections.observableArrayList();
-	// AND NOW JUST GO THROUGH THE REST OF THE ARRAY
-	for (int i = 0; i < jsonTagsArray.size(); i++) {
-	    JsonObject jsonObject = jsonTagsArray.getJsonObject(i);
-            diagramData.add(loadDiagram(jsonObject)); 
-	}
-        return diagramData;
     }
     
     // HELPER METHOD FOR LOADING DATA FROM A JSON FORMAT
     private Diagram loadDiagram(JsonObject jsonObject) {
         Diagram diagram = new Diagram(
-                jsonObject.getInt(JSON_DIAGRAM_ID),
-                jsonObject.getInt(JSON_X_COORDINATE),
-                jsonObject.getInt(JSON_Y_COORDINATE),
-                jsonObject.getString(JSON_NAME_STRING),
+                Integer.parseInt(jsonObject.getString(JSON_ID).substring(1)),
+                jsonObject.getInt(JSON_X),
+                jsonObject.getInt(JSON_Y),
+                jsonObject.getString(JSON_NAME),
                 jsonObject.getString(JSON_PACKAGE_NAME),
                 jsonObject.getInt(JSON_IS_INTERFACE) == 1,
                 jsonObject.getInt(JSON_IS_ABSTRACT) == 1,
                 jsonObject.getInt(JSON_IS_ABRIGED) == 1,
                 buildVariableList(jsonObject.getJsonArray(JSON_VARIABLE_DATA)),
                 buildMethodList(jsonObject.getJsonArray(JSON_METHOD_DATA)),
-                jsonObject.getInt(JSON_PARENT_ID),
-                buildConnectorList(jsonObject.getJsonArray(JSON_LINE_DATA))
+                buildDataArray(jsonObject.getString(JSON_INHERITANCE_DATA)),
+                buildDataArray(jsonObject.getString(JSON_AGGREGATION_DATA)),
+                buildDataArray(jsonObject.getString(JSON_RELATIONSHIP_DATA)),
+                buildDataArray(jsonObject.getString(JSON_CONNECTOR_DATA))
             );
-        if(!diagram.isAbriged()) {
-            diagram.updateVariableText();
-            diagram.updateMethodText();
-        }
-        diagram.setStroke(Color.BLACK);
-        diagram.setFill(Color.web("#e0eae1"));
-        diagram.dynamicResize();
-        diagram.dynamicPosition();
         return diagram;
+    }
+    
+    // HELPER METHOD FOR LOADING DATA FROM A JSON FORMAT
+    private Connector loadConnector(JsonObject jsonObject) {
+        Connector connector = new Connector(
+                Integer.parseInt(jsonObject.getString(JSON_ID).substring(1)),
+                jsonObject.getInt(JSON_TYPE),
+                jsonObject.getInt(JSON_SOURCE_ID),
+                jsonObject.getInt(JSON_DESTINATION_ID),
+                jsonObject.getInt(JSON_START_X),
+                jsonObject.getInt(JSON_START_Y),
+                jsonObject.getInt(JSON_END_X),
+                jsonObject.getInt(JSON_END_Y),
+                jsonObject.getInt(JSON_HEAD_LAYOUTX),
+                jsonObject.getInt(JSON_HEAD_LAYOUTY),
+                buildAnchorData(jsonObject.getString(JSON_ANCHOR_DATA))
+            );
+        connector.fixAnchorPosition();
+        return connector;
     }
     
     private ObservableList<Variable> buildVariableList(JsonArray variableArray) {
@@ -354,15 +370,27 @@ public class FileManager implements AppFileComponent {
         return methodList;
     }
     
-    private ArrayList<Integer> buildConnectorList(JsonArray lineArray) {
-       ArrayList<Integer> connectorList = new ArrayList<Integer>();
-        for (int i = 0; i < lineArray.size(); i++) {
-	    JsonObject jsonObject = lineArray.getJsonObject(i);
-            
-	}
-        return connectorList;
+    private ArrayList<Double> buildAnchorData(String anchorString) {
+        ArrayList<Double> anchorData = new ArrayList<>();
+        if(!anchorString.isEmpty()) {
+            String[] anchorStringArray = anchorString.split(", ");
+            for(String anchorToken : anchorStringArray) {
+                anchorData.add(Double.parseDouble(anchorToken));
+            }
+        }
+       return anchorData;
     }
     
+    private ArrayList<Integer> buildDataArray(String dataString) {
+        ArrayList<Integer> data = new ArrayList<>();
+        if(!dataString.isEmpty()) {
+            String[] dataStringArray = dataString.split(", ");
+            for(String dataToken : dataStringArray) {
+                data.add(Integer.parseInt(dataToken));
+            }
+        }
+       return data;
+    }
         /**
      * This function clears the contents of the file argument.
      * 

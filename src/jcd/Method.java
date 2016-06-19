@@ -33,6 +33,18 @@ public class Method {
         this.argumentThree = argumentThree;
     }
     
+    // Copy constructor
+    public Method(Method method) {
+        methodName = method.getMethodName();
+        returnType = method.getReturnType();
+        isStatic = method.isStatic();
+        isAbstract = method.isAbstract();
+        accessType = method.getAccessType();
+        argumentOne = method.getArgumentOne();
+        argumentTwo = method.getArgumentTwo();
+        argumentThree = method.getArgumentThree();
+    }
+    
     public String getMethodName() {
         return methodName;
     }

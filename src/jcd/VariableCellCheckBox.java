@@ -7,6 +7,7 @@ package jcd;
 
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.geometry.Pos;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.TableCell;
@@ -28,9 +29,10 @@ public class VariableCellCheckBox extends TableCell<Variable, String> {
                     commitEdit(checkBox.isSelected() ? "true" : "false");
             }
         });
-        this.setGraphic(checkBox);
-        this.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
-        this.setEditable(true);
+        setGraphic(checkBox);
+        setAlignment(Pos.CENTER);
+        setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+        setEditable(true);
     }
 
     @Override

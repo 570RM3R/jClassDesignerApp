@@ -13,10 +13,6 @@ import javafx.scene.Node;
 import javafx.scene.layout.Pane;
 import javafx.scene.transform.Scale;
 
-/**
- *
- * @author Johannes Rupprecht (https://github.com/RupprechJo)
- */
 public class ZoomingPane extends Pane {
         Node content;
         private DoubleProperty zoomFactor = new SimpleDoubleProperty(1);

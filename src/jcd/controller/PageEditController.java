@@ -14,15 +14,20 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.embed.swing.SwingFXUtils;
+import javafx.geometry.Insets;
 import javafx.scene.Cursor;
+import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.control.TableColumn;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Text;
+import javafx.stage.Stage;
 import javax.imageio.ImageIO;
 import jcd.Connector;
 import org.apache.commons.io.FileUtils;
@@ -44,13 +49,20 @@ import paf.ui.AppMessageDialogSingleton;
 public class PageEditController {
     
     // HERE'S THE FULL APP, WHICH GIVES US ACCESS TO OTHER STUFF
+    int version;
     boolean snapEnabled;
-    jClassDesigner app;
-    int index = -1;
-    double xStartingPosition, yStartingPosition, xEndingPosition, yEndingPosition;
+    boolean drawn;
+    boolean dragged;
+    boolean undone;
+    int index;
+    double xStart;
+    double yStart;
+    double xEnd;
+    double yEnd;
     Diagram diagram;
     Connector connector;
-    boolean drawn = false, dragged = false;
+    jClassDesigner app;
+    ArrayList<ArrayList<Node>>versionData;
 
     // WE USE THIS TO MAKE SURE OUR PROGRAMMED UPDATES OF UI
     // VALUES DON'T THEMSELVES TRIGGER EVENTS
@@ -63,7 +75,18 @@ public class PageEditController {
      */
     public PageEditController(jClassDesigner initApp) {
 	// KEEP IT FOR LATER
-	app = initApp;
+        version = -1;
+        snapEnabled= false;
+        drawn = false;
+        dragged = false;
+        undone = false;
+        index = -1;
+        xStart = 0;
+        yStart = 0;
+        xEnd = 0;
+        yEnd = 0;
+        app = initApp;
+        versionData = new ArrayList();
     }
     
     /**
@@ -86,20 +109,16 @@ public class PageEditController {
         Pane pane = workspace.getLeftPane();
         pane.setCursor(Cursor.CROSSHAIR);
         pane.setOnMousePressed((MouseEvent event) -> {
-            diagram = new Diagram(-1, event.getX(), event.getY(), "\t\t\t\t", "", false, false, false, FXCollections.observableArrayList(),
-                    FXCollections.observableArrayList(), new ArrayList(), new ArrayList(), new ArrayList(), new ArrayList());
-            if(snapEnabled)
-                diagram.setPosition((int)(diagram.getNameSection().getX()/10)*10, (int)(diagram.getNameSection().getY()/10)*10);
-            finishAddingDiagram(diagram);
+            finishAddingDiagram(event.getX(), event.getY(), "\t\t\t\t", "", false);
+            workspace.reloadWorkspace(index);
         } ) ;
-        workspace.reloadWorkspace(index);
     }
         
     public void handleSaveAsCodeRequest() {
         Workspace workspace = (Workspace) app.getWorkspaceComponent();
         workspace.reloadWorkspace(index);
         Pane pane = workspace.getLeftPane();
-        String folderPath = "work" + File.separator + "ExportedProject" + File.separator + "src";
+        String folderPath = "work" + File.separator + "ExportedProject" + File.separator + "src" + File.separator + "default_package";
         // Clear the existing files of the folder
         try {
             FileUtils.cleanDirectory(new File(folderPath));
@@ -120,32 +139,9 @@ public class PageEditController {
                 // Create java source code file
                 String filePath = packagePath + File.separator + tempDiagram.getNameText().getText() + ".java";
                 try (PrintWriter writer = createJavaSourceCode(tempDiagram, filePath, tempDiagram.getNameText().getText(), false)) {
-                    for(Variable variable : tempDiagram.getVariableData()) {
-                        writer.println("\t" + variable.exportString() + ";");
-                        if(!isPrimitive(variable.getTypeName()))
-                            createJavaSourceCode(tempDiagram, packagePath + File.separator +
-                                    variable.getTypeName()+ ".java", variable.getTypeName(), true);
-                    }
                     writer.println();
                     for(Method method : tempDiagram.getMethodData()) {
                         writer.println("\t" + method.exportString() + (method.isAbstract().equals("true") ? "" : " {"));
-                        
-                        String[] argumentOneArray = method.getArgumentOne().split(" ");
-                        String[] argumentTwoArray = method.getArgumentTwo().split(" ");
-                        String[] argumentThreeArray = method.getArgumentThree().split(" ");
-                        
-                        if(!isPrimitive(argumentOneArray[0]))
-                            createJavaSourceCode(tempDiagram, packagePath + File.separator +
-                                    argumentOneArray[0] + ".java", argumentOneArray[0], true);
-                        
-                        if(!isPrimitive(method.getArgumentTwo().split(" ")[0]))
-                            createJavaSourceCode(tempDiagram, packagePath + File.separator +
-                                    argumentTwoArray[0] + ".java", argumentTwoArray[0], true);
-                        
-                        if(!isPrimitive(method.getArgumentThree().split(" ")[0]))
-                            createJavaSourceCode(tempDiagram, packagePath + File.separator +
-                                    argumentThreeArray[0] + ".java", argumentThreeArray[0], true);
-                        
                         if(!method.getReturnType().isEmpty()) {
                             if(method.getReturnType().equals("char")) {
                                 writer.println("\t\treturn Character.UNASSIGNED;");
@@ -179,13 +175,9 @@ public class PageEditController {
         Pane pane = workspace.getLeftPane();
         pane.setCursor(Cursor.CROSSHAIR);
         pane.setOnMousePressed((MouseEvent event) -> {
-            diagram = new Diagram(-1, event.getX(), event.getY(), "\t\t\t\t", "", true, false, false, FXCollections.observableArrayList(),
-                    FXCollections.observableArrayList(), new ArrayList(), new ArrayList(), new ArrayList(), new ArrayList());
-            if(snapEnabled)
-                diagram.setPosition((int)(diagram.getNameSection().getX()/10)*10, (int)(diagram.getNameSection().getY()/10)*10);
-            finishAddingDiagram(diagram);
+            finishAddingDiagram(event.getX(), event.getY(), "\t\t\t\t", "", true);
+            workspace.reloadWorkspace(index);
         } ) ;
-        workspace.reloadWorkspace(index);
         
     }
     
@@ -194,19 +186,20 @@ public class PageEditController {
         Pane pane = workspace.getLeftPane();
         if (index != -1 && pane.getChildren().get(index) instanceof Diagram){
             diagram = (Diagram)pane.getChildren().get(index);
-            removeDiagramDependencies();
+            removeDiagramDependencies(diagram);
             pane.getChildren().remove(index);
             index = -1;
         }
         if (index != -1 && pane.getChildren().get(index) instanceof Connector){
             connector = (Connector)pane.getChildren().get(index);
-            removeConnectorDependencies();
+            removeConnectorDependencies(connector);
             pane.getChildren().remove(index);
             index = -1;
         }
         workspace.getNameTextField().setText("");
         workspace.getPackageTextField().setText("");
         workspace.getParentComboBox().setValue("");
+        createVersion();
         workspace.reloadWorkspace(index);
     }
     
@@ -243,9 +236,9 @@ public class PageEditController {
             diagram.updateVariableText();
             diagram.dynamicResize();
             diagram.dynamicPosition();
-            updateConnectors(diagram);
+            createVersion();
+            workspace.reloadWorkspace(index);
         }
-        workspace.reloadWorkspace(index);
     }
 
     public void handleRemoveVariablesRequest(Variable selectedVariable) {
@@ -257,7 +250,8 @@ public class PageEditController {
             diagram.updateVariableText();
             diagram.dynamicResize();
             diagram.dynamicPosition();
-            updateConnectors(diagram);
+            createVersion();
+            workspace.reloadWorkspace(index);
         }
     }
 
@@ -268,7 +262,7 @@ public class PageEditController {
             diagram = (Diagram)pane.getChildren().get(index);
             diagram.getNameText().setText(name);
             diagram.dynamicResize();
-            updateConnectors(diagram);
+            createVersion();
             workspace.reloadWorkspace(index);
         }
     }
@@ -305,13 +299,13 @@ public class PageEditController {
                 index = -1;
             }
             // Search whether any item lies in the clicked region
-            xStartingPosition = event.getX();
-            yStartingPosition = event.getY();
+            xStart = event.getX();
+            yStart = event.getY();
             for (int i = pane.getChildren().size()-1; i >= 0; i --) {
-                if (pane.getChildren().get(i).contains(xStartingPosition, yStartingPosition)) {
+                if (pane.getChildren().get(i).contains(xStart, yStart)) {
                     if(pane.getChildren().get(i) instanceof Diagram || pane.getChildren().get(i) instanceof Connector){
                         index = i;
-                        //app.getGUI().updateToolbarControls(false);
+                        app.getGUI().updateToolbarControls("1111111.1111111");
                         break;
                     }
                 }
@@ -323,6 +317,7 @@ public class PageEditController {
                     diagram.setStroke(Color.BLUE);
                     workspace.getNameTextField().setText(diagram.getNameText().getText());
                     workspace.getPackageTextField().setText(diagram.getPackageName());
+                    workspace.reloadWorkspace(index);
                     int lastParentId = diagram.getInheritanceData().isEmpty() ? -1 : diagram.getInheritanceData().get(diagram.getInheritanceData().size()-1);
                     Diagram parent = findDiagram(lastParentId);
                     workspace.getParentComboBox().setValue(parent == null ? "" : parent.getNameText().getText());
@@ -343,10 +338,11 @@ public class PageEditController {
         
         pane.setOnMouseDragged((MouseEvent event) -> {
             if (index != -1 && pane.getChildren().get(index) instanceof Diagram){
-                xEndingPosition = event.getX();
-                yEndingPosition = event.getY();
+                xEnd = event.getX();
+                yEnd = event.getY();
                 diagram = (Diagram)pane.getChildren().get(index);
-                diagram.setLayout(xEndingPosition - xStartingPosition, yEndingPosition - yStartingPosition);
+                diagram.setLayout(xEnd - xStart, yEnd - yStart);
+                setConnectorLayout( xEnd - xStart, yEnd - yStart);
                 dragged = true;
             }
         } ) ;
@@ -363,10 +359,11 @@ public class PageEditController {
                         diagram.getNameSection().getY() + diagram.getNameSection().getLayoutY());
                 diagram.dynamicPosition();
                 diagram.setLayout(0, 0);
-                updateConnectors(diagram);
+                setConnectorPosition();
 //                workspace.getremoveButton().setDisable(true);
 //                workspace.getDownButton().setDisable(true);
 //                workspace.getUpButton().setDisable(true);
+                createVersion();
                 index = -1;
                 dragged = false;
             }
@@ -388,7 +385,7 @@ public class PageEditController {
                 diagram.setAbriged(false);
             }
             diagram.dynamicResize();
-            updateConnectors(diagram);
+            createVersion();
         }
     }
 
@@ -398,6 +395,7 @@ public class PageEditController {
         if (index != -1 && pane.getChildren().get(index) instanceof Diagram){
             diagram = (Diagram)pane.getChildren().get(index);
             diagram.setPackageName(packageName);
+            createVersion();
         }
     }
 
@@ -410,9 +408,9 @@ public class PageEditController {
             diagram.updateMethodText();
             diagram.dynamicResize();
             diagram.dynamicPosition();
-            updateConnectors(diagram);
+            createVersion();
+            workspace.reloadWorkspace(index);
         }
-        workspace.reloadWorkspace(index);
     }
     
     public void handleGridRequest(boolean snapEnabled) {
@@ -428,32 +426,70 @@ public class PageEditController {
             diagram.updateMethodText();
             diagram.dynamicResize();
             diagram.dynamicPosition();
-            updateConnectors(diagram);
+            createVersion();
+            workspace.reloadWorkspace(index);
         }
     }
 
     public void handleUndoRequest() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        Workspace workspace = (Workspace) app.getWorkspaceComponent();
+        Pane pane = workspace.getLeftPane();
+        pane.getChildren().clear();
+        if(version > 0) {
+            version--;
+            for(Node node: versionData.get(version)) {
+                if(node instanceof Diagram) {
+                    Diagram tempDiagram = (Diagram)node;
+                    pane.getChildren().add(new Diagram(tempDiagram));
+                }
+                else if(node instanceof Connector) {
+                    Connector tempConnector = (Connector)node;
+                    pane.getChildren().add(new Connector(tempConnector));
+                }
+            }
+            undone = true;
+            workspace.reloadWorkspace(-1);
+        }
     }
 
     public void handleRedoRequest() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        Workspace workspace = (Workspace) app.getWorkspaceComponent();
+        Pane pane = workspace.getLeftPane();
+        if(version < versionData.size()) {
+            pane.getChildren().clear();
+            for(Node node: versionData.get(version)) {
+                if(node instanceof Diagram) {
+                    Diagram tempDiagram = (Diagram)node;
+                    pane.getChildren().add(new Diagram(tempDiagram));
+                }
+                else if(node instanceof Connector) {
+                    Connector tempConnector = (Connector)node;
+                    pane.getChildren().add(new Connector(tempConnector));
+                }
+            }
+            version++;
+            workspace.reloadWorkspace(-1);
+        }
     }
-
-    public void handleZoomInRequest() {
-
-    }
-
-    public void handleZoomOutRequest() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
+    
     public void handleHelpRequest() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        Stage helpStage = new Stage();
+        FlowPane helpPane = new FlowPane();
+        helpPane.setPadding(new Insets(100, 100, 100, 90));
+        helpPane.getChildren().add(new Text("Put your cursor on a button, and you'll see help note.\n\n\n\t  For more help: abu.saeid@outlook.com"));
+        Scene helpScene = new Scene(helpPane, 500, 300, Color.WHITE);
+        helpStage.setScene(helpScene);
+        helpStage.show();
     }
 
     public void handleInfoRequest() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        Stage infoStage = new Stage();
+        FlowPane infoPane = new FlowPane();
+        infoPane.setPadding(new Insets(100, 100, 100, 90));
+        infoPane.getChildren().add(new Text("jClass Designer (beta)\n\n Developed by Saeid\n\n Dedicated to Mom ❤"));
+        Scene infoScene = new Scene(infoPane, 320, 300, Color.WHITE);
+        infoStage.setScene(infoScene);
+        infoStage.show();
     }
 
     public void handleParentComboBoxUpdateRequest(String parentName) {
@@ -462,41 +498,25 @@ public class PageEditController {
         if (index != -1 && pane.getChildren().get(index) instanceof Diagram){
             diagram = (Diagram)pane.getChildren().get(index);
             Diagram parent = findDiagram(parentName);
-                // Create new parent diagram if it doesn't exist in the workspace
-                if(parent == null && !isPrimitive(parentName)) {
-                    parent = new Diagram(-1, diagram.getNameSection().getX() + 62.5, diagram.getNameSection().getY() + diagram.heightProperty().doubleValue() + 180,
-                            parentName, diagram.getPackageName(), false, false, false, FXCollections.observableArrayList(),
-                            FXCollections.observableArrayList(), new ArrayList(), new ArrayList(), new ArrayList(), new ArrayList());
-                    finishAddingDiagram(parent);
-                }
-                // Set proper data, and connect the child with the parent
-                if(parent != null && diagram.getDiagramId() != parent.getDiagramId()) {  
-                    if (diagram.getInheritanceData().isEmpty() || (!diagram.getInheritanceData().isEmpty() && !diagram.getInheritanceData().contains(parent.getDiagramId()))) {
-                        diagram.getInheritanceData().add(parent.getDiagramId());
-                        finishAddingConnector(diagram, parent, 1);
-                    }
-                }
-        }
-    }
-    
-    // Find a connector from its id
-    public Connector findConnector(int connectorId) {
-        Workspace workspace = (Workspace) app.getWorkspaceComponent();
-        Pane pane = workspace.getLeftPane();
-        if(connectorId == -1)
-            return null;
-        for(int i = 0; i < pane.getChildren().size(); i++) {
-            if (pane.getChildren().get(i) instanceof Connector) {
-                Connector tempConnector = (Connector)pane.getChildren().get(i);
-                if(tempConnector.getConnectorId() == connectorId)
-                    return tempConnector;
+            // Create new parent diagram if it doesn't exist in the workspace
+            if(parent == null && !isPrimitive(parentName)) {
+                parent = finishAddingDiagram(diagram.getNameSection().getX() + 62.5, diagram.getNameSection().getY() - 180, parentName, diagram.getPackageName(), false);
             }
+            // Set proper data, and connect the child with the parent
+            if(parent != null && diagram.getDiagramId() != parent.getDiagramId()) {  
+                if (diagram.addInheritanceData(parent.getDiagramId())) {
+                    if(!parent.isInterface())
+                        finishAddingConnector(diagram, parent, 11);
+                    else
+                        finishAddingConnector(diagram, parent, 01);
+                }
+            }
+            createVersion();
         }
-        return null;
     }
     
     // Find a diagram from its id
-    public Diagram findDiagram(int diagramId) {
+    private Diagram findDiagram(int diagramId) {
         Workspace workspace = (Workspace) app.getWorkspaceComponent();
         Pane pane = workspace.getLeftPane();
         if(diagramId == -1)
@@ -512,7 +532,7 @@ public class PageEditController {
     }
     
     // Find a diagram from its name
-    public Diagram findDiagram(String diagramName) {
+    private Diagram findDiagram(String diagramName) {
         Workspace workspace = (Workspace) app.getWorkspaceComponent();
         Pane pane = workspace.getLeftPane();
         for(int i = 0; i < pane.getChildren().size(); i++) {
@@ -525,25 +545,25 @@ public class PageEditController {
         return null;
     }
     // Check whether the class name is primitive type or not
-    public boolean isPrimitive(String className) {
+    private boolean isPrimitive(String className) {
         String[] primitiveClass = {"byte", "short", "int", "long", "float", "double", "char", "boolean", "String"};
         for(int i = 0; i < primitiveClass.length; i++) {
-            if(className.equals(primitiveClass[i]))
+            if(className.contains(primitiveClass[i]))
                 return true;
         }
         return false;
     }
     
     // Crete a java source code file
-    public PrintWriter createJavaSourceCode(Diagram tempDiagram, String filePath, String name, boolean isComplete) {
+    private PrintWriter createJavaSourceCode(Diagram tempDiagram, String filePath, String name, boolean isComplete) {
         PrintWriter writer = null;
         try {
             File file = new File(filePath);
             file.getParentFile().mkdirs();
             writer = new PrintWriter(filePath, "UTF-8");
-            writer.println((tempDiagram.getPackageName().isEmpty() ? "" : "package " + tempDiagram.getPackageName() + ";\n\n") + 
-                    "public " + (isComplete ? "class " : (tempDiagram.isAbstract() ? "abstract " : "") + (tempDiagram.isInterface() ? 
-                    "interface " : "class ")) + name + " extends Object{" + (isComplete ? "\n\tpublic " + name + "(){}"+  "\n}" : ""));
+            writer.println((tempDiagram.getPackageName().isEmpty() ? "package default_package;\n\n" : "package default_package." + tempDiagram.getPackageName() + ";\n\n") + 
+                    getImportString(tempDiagram) + "public " + (isComplete ? "class " : (tempDiagram.isAbstract() ? "abstract " : "") + (tempDiagram.isInterface() ? 
+                    "interface " : "class ")) + name + getInheritanceString(tempDiagram) + " {" + (isComplete ? "\n\tpublic " + name + "(){}"+  "\n}" : ""));
         } catch (FileNotFoundException | UnsupportedEncodingException ex) {
             Logger.getLogger(PageEditController.class.getName()).log(Level.SEVERE, null, ex);
         } finally {
@@ -553,65 +573,30 @@ public class PageEditController {
         return writer;
     }
     
-    // Retruns the coordinates of shortest path between source and diagram
-    public ObservableList<Double> findLinePath(Diagram source, Diagram destination) {        
-        double[] sourceCoordinates = {
-                // Source top
-                source.getNameSection().getX() + (source.widthProperty().doubleValue()/2),
-                source.getNameSection().getY(),
-                // Source bottom
-                source.getNameSection().getX() + (source.widthProperty().doubleValue()/2),
-                source.getNameSection().getY() + (source.heightProperty().doubleValue()),
-                // Source right
-                source.getNameSection().getX() + (source.widthProperty().doubleValue()),
-                source.getNameSection().getY() + (source.heightProperty().doubleValue()/2),
-                // Source left
-                source.getNameSection().getX(),
-                source.getNameSection().getY() + (source.heightProperty().doubleValue()/2),
-                };
-        double[] destinationCoordinates = {
-                // Destination top
-                destination.getNameSection().getX() + (destination.widthProperty().doubleValue()/2),
-                destination.getNameSection().getY(),
-                // Destination bottom
-                destination.getNameSection().getX() + (destination.widthProperty().doubleValue()/2),
-                destination.getNameSection().getY() + (destination.heightProperty().doubleValue()),
-                // Destination right
-                destination.getNameSection().getX() + (destination.widthProperty().doubleValue()),
-                destination.getNameSection().getY() + (destination.heightProperty().doubleValue()/2),
-                // Destination left
-                destination.getNameSection().getX(),
-                destination.getNameSection().getY() + (destination.heightProperty().doubleValue()/2),
-                };
-        
-        double[] minData = new double[2];
-        minData[0] = 0;
-        
-        for(int i = 0; i < sourceCoordinates.length; i += 2){
-            for(int j = 0; j < destinationCoordinates.length; j += 2) {
-                double distance = Math.sqrt((destinationCoordinates[j]-sourceCoordinates[i]) * (destinationCoordinates[j]-sourceCoordinates[i]) +
-                        ((destinationCoordinates[j+1]-sourceCoordinates[i+1])) * (destinationCoordinates[j+1]-sourceCoordinates[i+1]));
-                if(i == 0)
-                    minData[1] = distance;
-                else if(distance < minData[1]) {
-                    minData[0] = i * 10 + j;
-                    minData[1] = distance;
-                }
+    private String getInheritanceString(Diagram diagram) {
+        String inheritanceString = "";
+        for(int i = 0; i < diagram.getInheritanceData().size(); i++) {
+            Diagram parent = findDiagram(diagram.getInheritanceData().get(i));
+            if(parent != null) {
+                if(parent.isInterface())
+                    inheritanceString += " implements " + parent.getNameText().getText();
+                else
+                    inheritanceString += " extends " + parent.getNameText().getText();
             }
         }
-        
-        ObservableList<Double> linePath = FXCollections.observableArrayList();
-        linePath.addAll(sourceCoordinates[(int)minData[0]/10], sourceCoordinates[((int)minData[0]/10) + 1], 
-            destinationCoordinates[(int)minData[0]%10], destinationCoordinates[((int)minData[0]%10) + 1]);
-        return linePath;
+        return inheritanceString;
     }
-    // Update connector paths of a diagram when it's moved
-    private void updateConnectors(Diagram tempDiagram) {
-//        for(int i = 0; i < tempDiagram.getConnectorData().size(); i++) {
-//                Connector connector = findConnector(tempDiagram.getConnectorData().get(i));
-//                if(connector != null)
-//                    connector.updateConnectorPath(findLinePath(findDiagram(connector.getSourceId()), findDiagram(connector.getDestinationId())));
-//        }
+    
+    private String getImportString(Diagram diagram) {
+        String importString = "";
+        for(int i = 0; i < diagram.getInheritanceData().size(); i++) {
+            Diagram parent = findDiagram(diagram.getInheritanceData().get(i));
+            if(parent != null) {
+                importString += "import default_package." + parent.getNameText().getText() + ";\n";
+            }
+        }
+        importString += "\n";
+        return importString;
     }
     
     // Handle variable table updates
@@ -627,11 +612,9 @@ public class PageEditController {
                     ((Variable)tableColumn.getTableView().getItems().get(tableColumn.getTablePosition().getRow())).setTypeName(tableColumn.getNewValue());
                     Diagram tempDiagram = findDiagram(tableColumn.getNewValue());
                     if(tempDiagram == null && !isPrimitive(tableColumn.getNewValue())) {
-                        tempDiagram = new Diagram(-1, diagram.getNameSection().getX() + 62.5, diagram.getNameSection().getY() + diagram.heightProperty().doubleValue() + 180,
-                                tableColumn.getNewValue(), diagram.getPackageName(), false, false, false, FXCollections.observableArrayList(),
-                                FXCollections.observableArrayList(), new ArrayList(), new ArrayList(), new ArrayList(), new ArrayList());
-                        finishAddingDiagram(tempDiagram);
-                        finishAddingConnector(diagram, tempDiagram, 1);
+                        tempDiagram = finishAddingDiagram(diagram.getNameSection().getX() - 280, diagram.getNameSection().getY(), tableColumn.getNewValue(), diagram.getPackageName(), false);
+                        finishAddingConnector(tempDiagram, diagram, 12);
+                        tempDiagram.addAggregationData(diagram.getDiagramId());
                     }
                     break;
                 case 3:
@@ -643,8 +626,9 @@ public class PageEditController {
             }
             diagram = (Diagram)pane.getChildren().get(index);
             diagram.updateVariableText();
+            createVersion();
+            workspace.reloadWorkspace(index);
         }
-        workspace.reloadWorkspace(index);
     }
     
     // Handle method table updates
@@ -659,12 +643,10 @@ public class PageEditController {
                 case 2:
                     ((Method)tableColumn.getTableView().getItems().get(tableColumn.getTablePosition().getRow())).setReturnType(tableColumn.getNewValue());
                     Diagram tempDiagram = findDiagram(tableColumn.getNewValue());
-                    if(tempDiagram == null && !isPrimitive(tableColumn.getNewValue())) {
-                        tempDiagram = new Diagram(-1, diagram.getNameSection().getX() + 62.5, diagram.getNameSection().getY() + diagram.heightProperty().doubleValue() + 180,
-                                tableColumn.getNewValue(), diagram.getPackageName(), false, false, false, FXCollections.observableArrayList(),
-                                FXCollections.observableArrayList(), new ArrayList(), new ArrayList(), new ArrayList(), new ArrayList());
-                        finishAddingDiagram(tempDiagram);
-                        finishAddingConnector(diagram, tempDiagram, 1);
+                    if(tempDiagram == null && !isPrimitive(tableColumn.getNewValue()) && !tableColumn.getNewValue().equals("void")) {
+                        tempDiagram = finishAddingDiagram(diagram.getNameSection().getX() - 280, diagram.getNameSection().getY(), tableColumn.getNewValue(), diagram.getPackageName(), false);
+                        finishAddingConnector(diagram, tempDiagram, 13);
+                        diagram.addRelationshipData(tempDiagram.getDiagramId());
                     }
                     break;
                 case 3:
@@ -672,6 +654,9 @@ public class PageEditController {
                     break;
                 case 4:
                     ((Method)tableColumn.getTableView().getItems().get(tableColumn.getTablePosition().getRow())).setAbstract(tableColumn.getNewValue());
+                    diagram.setAbstract(true);
+                    diagram.updateHeadingText();
+                    diagram.dynamicPosition();
                     break;
                 case 5:
                     ((Method)tableColumn.getTableView().getItems().get(tableColumn.getTablePosition().getRow())).setAccessType(tableColumn.getNewValue());
@@ -680,93 +665,145 @@ public class PageEditController {
                     ((Method)tableColumn.getTableView().getItems().get(tableColumn.getTablePosition().getRow())).setArgumentOne(tableColumn.getNewValue());
                     tempDiagram = findDiagram(tableColumn.getNewValue().split(" ")[0]);
                     if(tempDiagram == null && !isPrimitive(tableColumn.getNewValue().split(" ")[0])) {
-                        tempDiagram = new Diagram(-1, diagram.getNameSection().getX() + 62.5, diagram.getNameSection().getY() + diagram.heightProperty().doubleValue() + 180,
-                                tableColumn.getNewValue().split(" ")[0], diagram.getPackageName(), false, false, false, FXCollections.observableArrayList(),
-                                FXCollections.observableArrayList(), new ArrayList(), new ArrayList(), new ArrayList(), new ArrayList());
-                        finishAddingDiagram(tempDiagram);
-                        finishAddingConnector(diagram, tempDiagram, 1);
+                        tempDiagram = finishAddingDiagram(diagram.getNameSection().getX() - 280, diagram.getNameSection().getY(), tableColumn.getNewValue().split(" ")[0], diagram.getPackageName(), false);
+                        finishAddingConnector(diagram, tempDiagram, 13);
+                        diagram.addRelationshipData(tempDiagram.getDiagramId());
                     }
                     break;
                 case 7:
                     ((Method)tableColumn.getTableView().getItems().get(tableColumn.getTablePosition().getRow())).setArgumentTwo(tableColumn.getNewValue());
                     tempDiagram = findDiagram(tableColumn.getNewValue().split(" ")[0]);
                     if(tempDiagram == null && !isPrimitive(tableColumn.getNewValue().split(" ")[0])) {
-                        tempDiagram = new Diagram(-1, diagram.getNameSection().getX() + 62.5, diagram.getNameSection().getY() + diagram.heightProperty().doubleValue() + 180,
-                                tableColumn.getNewValue().split(" ")[0], diagram.getPackageName(), false, false, false, FXCollections.observableArrayList(),
-                                FXCollections.observableArrayList(), new ArrayList(), new ArrayList(), new ArrayList(), new ArrayList());
-                        finishAddingDiagram(tempDiagram);
-                        finishAddingConnector(diagram, tempDiagram, 1);
+                        tempDiagram = finishAddingDiagram(diagram.getNameSection().getX() - 280, diagram.getNameSection().getY(), tableColumn.getNewValue().split(" ")[0], diagram.getPackageName(), false);
+                        finishAddingConnector(diagram, tempDiagram, 13);
+                        diagram.addRelationshipData(tempDiagram.getDiagramId());
                     }
                     break;
                 case 8:
                     ((Method)tableColumn.getTableView().getItems().get(tableColumn.getTablePosition().getRow())).setArgumentThree(tableColumn.getNewValue());
                     tempDiagram = findDiagram(tableColumn.getNewValue().split(" ")[0]);
                     if(tempDiagram == null && !isPrimitive(tableColumn.getNewValue().split(" ")[0])) {
-                        tempDiagram = new Diagram(-1, diagram.getNameSection().getX() + 62.5, diagram.getNameSection().getY() + diagram.heightProperty().doubleValue() + 180,
-                                tableColumn.getNewValue().split(" ")[0], diagram.getPackageName(), false, false, false, FXCollections.observableArrayList(),
-                                FXCollections.observableArrayList(), new ArrayList(), new ArrayList(), new ArrayList(), new ArrayList());
-                        finishAddingDiagram(tempDiagram);
-                        finishAddingConnector(diagram, tempDiagram, 1);
+                        tempDiagram = finishAddingDiagram(diagram.getNameSection().getX() - 280, diagram.getNameSection().getY(), tableColumn.getNewValue().split(" ")[0], diagram.getPackageName(), false);
+                        finishAddingConnector(diagram, tempDiagram, 13);
+                        diagram.addRelationshipData(tempDiagram.getDiagramId());
                     }
                     break;
             }
             diagram = (Diagram)pane.getChildren().get(index);
             diagram.updateMethodText();
+            createVersion();
+            workspace.reloadWorkspace(index);
         }
-        workspace.reloadWorkspace(index);
     }
     
     // Remove dependencies of a diagram when it is removed
-    public void removeDiagramDependencies() {
+    private void removeDiagramDependencies(Diagram diagram) {
         Workspace workspace = (Workspace) app.getWorkspaceComponent();
         Pane pane = workspace.getLeftPane();
         for(int i = 0; i < diagram.getConnectorData().size(); i++) {
             for(int j = 0; j < pane.getChildren().size(); j++) {
                 if(pane.getChildren().get(j) instanceof Connector) {
                     Connector tempConnector = (Connector)pane.getChildren().get(j);
-                    if(tempConnector.getConnectorId() == diagram.getConnectorData().get(i))
+                    if(tempConnector.getConnectorId() == diagram.getConnectorData().get(i)) {
+                        removeConnectorDependencies(tempConnector);
                         pane.getChildren().remove(j);
+                    }
                 }
             }
         }
     }
     // Remove dependencies of a connector when it is removed
-    public void removeConnectorDependencies() {
+    private void removeConnectorDependencies(Connector connector) {
         Workspace workspace = (Workspace) app.getWorkspaceComponent();
         Pane pane = workspace.getLeftPane();
         for(int i = 0; i < pane.getChildren().size(); i++) {
             if(pane.getChildren().get(i) instanceof Diagram) {
                 Diagram tempDiagram = (Diagram)pane.getChildren().get(i);
-                if(tempDiagram.getDiagramId() == connector.getSourceId()) {
-                    tempDiagram.removeInheritanceData(connector.getDestinationId());
-                    break;
+                if(tempDiagram.getDiagramId() == connector.getSourceId() || tempDiagram.getDiagramId() == connector.getDestinationId()) {
+                    if((connector.getType() % 100) % 10 == 1)
+                        tempDiagram.removeInheritanceData(connector.getDestinationId());
+                    else if((connector.getType() % 100) % 10 == 2)
+                        tempDiagram.removeAggregationData(connector.getDestinationId());
+                    else if((connector.getType() % 100) % 10 == 3)
+                        tempDiagram.removeRelationshipData(connector.getDestinationId());
+                    tempDiagram.removeConnectorData(connector.getConnectorId());
                 }
             }
         }
     }
-    // Finish adding a diagram
-    private void finishAddingDiagram(Diagram newDiagram) {
+    
+    private Diagram finishAddingDiagram(double x, double y, String name, String packageName, boolean isInterface) {
         Workspace workspace = (Workspace) app.getWorkspaceComponent();
         Pane pane = workspace.getLeftPane();
-        newDiagram.setStroke(Color.BLACK);
-        newDiagram.setFill(Color.web("#e0eae1"));
-        newDiagram.dynamicResize();
-        newDiagram.dynamicPosition();
+        Diagram newDiagram = new Diagram(-1, x, y, name, packageName, isInterface, false, false, FXCollections.observableArrayList(),
+                FXCollections.observableArrayList(), new ArrayList(), new ArrayList(), new ArrayList(), new ArrayList());
+        if(snapEnabled)
+                newDiagram.setPosition((int)(newDiagram.getNameSection().getX()/10)*10, (int)(newDiagram.getNameSection().getY()/10)*10);
         pane.getChildren().add(newDiagram);
+        createVersion();
+        return newDiagram;
     }
     
-    private void finishAddingConnector(Diagram sourceDiagram, Diagram destinationDiagram, int option) {
+    // Create a connector by calculating the best path between source and diagram
+    private Connector finishAddingConnector(Diagram source, Diagram destination, int type) {
         Workspace workspace = (Workspace) app.getWorkspaceComponent();
         Pane pane = workspace.getLeftPane();
-        connector = new Connector(-1, 10, sourceDiagram.getDiagramId(), destinationDiagram.getDiagramId(), 
-                sourceDiagram.getConnectionX(1).doubleValue(), sourceDiagram.getConnectionY(1).doubleValue(), 
-                destinationDiagram.getConnectionX(3).doubleValue(), destinationDiagram.getConnectionY(3).doubleValue());
-        //connector.bindProperties(sourceDiagram.getConnectionX(1), sourceDiagram.getConnectionY(1),
-                //destinationDiagram.getConnectionX(3), destinationDiagram.getConnectionY(3));
-        //connector.updateConnectorPath(linePath);
-        sourceDiagram.getConnectorData().add(connector.getConnectorId());
-        destinationDiagram.getConnectorData().add(connector.getConnectorId());
-        pane.getChildren().add(connector);
+        int[] connectorData = new int[3];
+        // Destination is straight top
+        if(Math.abs(source.getConnectionX(1) - destination.getConnectionX(1)) < 10 && source.getConnectionY(1) > destination.getConnectionY(1)) {
+            connectorData[0] = 1;
+            connectorData[1] = 1;
+            connectorData[2] = 3;
+        }
+        // Destination is top right
+        else if(source.getConnectionX(1) < destination.getConnectionX(1) && source.getConnectionY(1) > destination.getConnectionY(1)) {
+            connectorData[0] = 2;
+            connectorData[1] = 2;
+            connectorData[2] = 4;
+        }
+        // Destination is straight right
+        else if(source.getConnectionX(1) < destination.getConnectionX(1) && Math.abs(source.getConnectionY(1) - destination.getConnectionY(1)) < 10) {
+            connectorData[0] = 3;
+            connectorData[1] = 2;
+            connectorData[2] = 4;
+        }
+        // Destination is bottom right
+        else if(source.getConnectionX(1) < destination.getConnectionX(1) && source.getConnectionY(1) < destination.getConnectionY(1)) {
+            connectorData[0] = 4;
+            connectorData[1] = 2;
+            connectorData[2] = 4;
+        }
+        // Destination is straight bottom
+        else if(Math.abs(source.getConnectionX(1) - destination.getConnectionX(1)) < 10 && source.getConnectionY(1) < destination.getConnectionY(1)) {
+            connectorData[0] = 5;
+            connectorData[1] = 3;
+            connectorData[2] = 1;
+        }
+        // Destination is left bottom
+        else if(source.getConnectionX(1) > destination.getConnectionX(1) && source.getConnectionY(1) < destination.getConnectionY(1)) {
+            connectorData[0] = 6;
+            connectorData[1] = 4;
+            connectorData[2] = 2;
+        }
+        // Destination is straight left
+        else if(source.getConnectionX(1) > destination.getConnectionX(1) && Math.abs(source.getConnectionY(1) - destination.getConnectionY(1)) < 10) {
+            connectorData[0] = 7;
+            connectorData[1] = 4;
+            connectorData[2] = 2;
+        }
+        // Destination is top left
+        else if(source.getConnectionX(1) > destination.getConnectionX(1) && source.getConnectionY(1) > destination.getConnectionY(1)) {
+            connectorData[0] = 8;
+            connectorData[1] = 4;
+            connectorData[2] = 2;
+        }
+        Connector newConnector =  new Connector(-1, connectorData[0] * 100 + type, source.getDiagramId(), destination.getDiagramId(), source.getConnectionX(connectorData[1]),
+                source.getConnectionY(connectorData[1]), destination.getConnectionX(connectorData[2]), destination.getConnectionY(connectorData[2]), -1, -1, new ArrayList());
+        
+        source.getConnectorData().add(newConnector.getConnectorId());
+        destination.getConnectorData().add(newConnector.getConnectorId());
+        pane.getChildren().add(newConnector);
+        return newConnector;
     }
 
     public void handleGridRequest(boolean isSelected, double width, double height) {
@@ -785,8 +822,59 @@ public class PageEditController {
         }
     }
     // Bind the connectors respective diagram
-    public void bindConnectors(){
-        
+    private void setConnectorLayout(double deltaX, double deltaY){
+        Workspace workspace = (Workspace) app.getWorkspaceComponent();
+        Pane pane = workspace.getLeftPane();
+        for(int i = 0; i < diagram.getConnectorData().size(); i++) {
+           for(int j = 0; j < pane.getChildren().size(); j++) {
+               if(pane.getChildren().get(j) instanceof Connector) {
+                    connector = (Connector)pane.getChildren().get(j);
+                    if(diagram.getConnectorData().get(i) == connector.getConnectorId())
+                        connector.setLayout(deltaX, deltaY, diagram.getDiagramId());
+               }
+           } 
+        }
     }
     
+    private void setConnectorPosition(){
+        Workspace workspace = (Workspace) app.getWorkspaceComponent();
+        Pane pane = workspace.getLeftPane();
+        for(int i = 0; i < diagram.getConnectorData().size(); i++) {
+           for(int j = 0; j < pane.getChildren().size(); j++) {
+               if(pane.getChildren().get(j) instanceof Connector) {
+                    connector = (Connector)pane.getChildren().get(j);
+                    if(diagram.getConnectorData().get(i) == connector.getConnectorId())
+                        connector.setPosition(diagram.getDiagramId());
+               }
+           } 
+        }
+    }
+    
+    public void createVersion() {
+        Workspace workspace = (Workspace) app.getWorkspaceComponent();
+        Pane pane = workspace.getLeftPane();
+        // Clear the obsolete entries
+        if(undone) {
+            for(int i = version; i < versionData.size();)
+                versionData.remove(i);
+            undone = false;
+        }
+        versionData.add(copyPaneData(pane));
+        version++;
+    }
+    
+    private ArrayList<Node> copyPaneData(Pane pane) {
+        ArrayList<Node> version = new ArrayList();
+        for(Node node: pane.getChildren()) {
+            if(node instanceof Diagram) {
+                Diagram tempDiagram = (Diagram)node;
+                version.add(new Diagram(tempDiagram));
+            }
+            else if(node instanceof Connector) {
+                Connector tempConnector = (Connector)node;
+                version.add(new Connector(tempConnector));
+            }
+        }
+        return version;
+    }
 }
