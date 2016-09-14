@@ -199,13 +199,14 @@ public class Connector extends Group{
         for (int i = 0; i < number; i++) {
             Line line = new Line();
             Anchor anchor;
+            Color transparent = new Color(1, 1, 1, 0);
             if (isFirst && i == 0) {
-                base = new Anchor(Color.BLACK, new SimpleDoubleProperty(startX), new SimpleDoubleProperty(startY));
+                base = new Anchor(transparent, new SimpleDoubleProperty(startX), new SimpleDoubleProperty(startY));
                 anchor = base;
             }
             else {
                 previousLine = (Line)getChildren().get(getChildren().size()-1);
-                anchor = new Anchor(Color.BLACK, previousLine.endXProperty(), previousLine.endYProperty());
+                anchor = new Anchor(transparent, previousLine.endXProperty(), previousLine.endYProperty());
             }
             getChildren().add(anchor);
             line.startXProperty().bind(anchor.centerXProperty());
@@ -312,7 +313,7 @@ public class Connector extends Group{
         Connector.idCounter = idCounter;
     }
     
-    public void setStroke(Color color) {
+    public void setStroke(Color color, boolean isSelected) {
         for(int i = 0; i < getChildren().size(); i++) {
             if(getChildren().get(i) instanceof Line) {
                 Line line = (Line)getChildren().get(i);
@@ -320,7 +321,10 @@ public class Connector extends Group{
             }
             else if(getChildren().get(i) instanceof Anchor) {
                Anchor anchor = (Anchor)getChildren().get(i);
-               anchor.setFillAndStroke(color);
+               if(isSelected)
+                   anchor.setFillAndStroke(color);
+               else
+                   anchor.setFillAndStroke(new Color(1, 1, 1, 0));
             }
             else {
                 Head head = (Head)getChildren().get(i);
@@ -374,7 +378,7 @@ public class Connector extends Group{
     public class Anchor extends Circle {
         boolean isDragEnabled;
         Anchor(Color color, DoubleProperty x, DoubleProperty y) {
-            super(x.get(), y.get(), 0.5);
+            super(x.get(), y.get(), 1.5);
             setFillAndStroke(color);
             setStrokeWidth(1);
             setStrokeType(StrokeType.OUTSIDE);

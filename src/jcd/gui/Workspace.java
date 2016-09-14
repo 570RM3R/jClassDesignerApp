@@ -159,6 +159,7 @@ public class Workspace extends AppWorkspaceComponent {
         
         // WE'LL PUT THE WORKSPACE INSIDE A SPLIT PANE
         workspaceSplitPane = new SplitPane();
+        workspaceSplitPane.setDividerPosition(0, 0.5);
         
         // WE'LL ORGANIZE OUR WORKSPACE COMPONENTS USING A BORDER PANE
 	workspace = new Pane();

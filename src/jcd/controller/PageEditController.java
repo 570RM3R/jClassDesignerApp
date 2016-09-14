@@ -290,7 +290,7 @@ public class PageEditController {
                 }
                 else if(pane.getChildren().get(index) instanceof Connector) {
                     connector = (Connector)pane.getChildren().get(index);
-                    connector.setStroke(Color.BLACK);
+                    connector.setStroke(Color.BLACK, false);
                     connector.setDragEnabled(false);
                 }
                 workspace.getNameTextField().setText("");
@@ -324,7 +324,7 @@ public class PageEditController {
                 }
                 else if(pane.getChildren().get(index) instanceof Connector){
                     connector = (Connector)pane.getChildren().get(index);
-                    connector.setStroke(Color.BLUE);
+                    connector.setStroke(Color.BLUE, true);
                     connector.setDragEnabled(true);
                     workspace.getNameTextField().setText("");
                     workspace.getPackageTextField().setText("");
@@ -486,7 +486,7 @@ public class PageEditController {
         Stage infoStage = new Stage();
         FlowPane infoPane = new FlowPane();
         infoPane.setPadding(new Insets(100, 100, 100, 90));
-        infoPane.getChildren().add(new Text("jClass Designer (beta)\n\n Developed by Saeid\n\n Dedicated to Mom ❤"));
+        infoPane.getChildren().add(new Text("jClass Designer (alpha)\n\n Developed by Saeid\n\n Dedicated to Mom ❤"));
         Scene infoScene = new Scene(infoPane, 320, 300, Color.WHITE);
         infoStage.setScene(infoScene);
         infoStage.show();
