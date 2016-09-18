@@ -8,6 +8,7 @@ package jcd.gui;
 import java.io.IOException;
 import javafx.geometry.Insets;
 import static javafx.geometry.Orientation.VERTICAL;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
@@ -24,6 +25,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
+import javafx.stage.Screen;
 import javafx.util.Callback;
 import jcd.Diagram;
 import jcd.Method;
@@ -157,25 +159,26 @@ public class Workspace extends AppWorkspaceComponent {
 	FileManager fileManager = (FileManager) app.getFileComponent();
 	DataManager dataManager = (DataManager) app.getDataComponent();
         
+        // GET THE SCREEN SIZE
+        Screen screen = Screen.getPrimary();
+        Rectangle2D bounds = screen.getVisualBounds();
+        
+        
         // WE'LL PUT THE WORKSPACE INSIDE A SPLIT PANE
         workspaceSplitPane = new SplitPane();
-        workspaceSplitPane.setDividerPosition(0, 0.5);
         
         // WE'LL ORGANIZE OUR WORKSPACE COMPONENTS USING A BORDER PANE
 	workspace = new Pane();
         
         // THESE ARE THE MAIN TWO PANES OF THE APPLICATION
         leftPane = new Pane();
-        leftPane.setMinSize(1200,870);
+        leftPane.setMinSize(bounds.getWidth() - 395, bounds.getHeight());
         zoomingPane = new ZoomingPane(leftPane);
         ScrollPane leftScrollPane = new ScrollPane(zoomingPane);
-        leftScrollPane.setMinSize(1060, 747);
-        leftScrollPane.setMaxSize(1060, 747);
-        
+        leftScrollPane.setMinSize(bounds.getWidth() - 395, bounds.getHeight() - 78);
+        leftScrollPane.setMaxSize(bounds.getWidth() - 395, bounds.getHeight() - 78);
         rightPane = new VBox(20);
         rightPane.setPadding(new Insets(8, 12, 8, 12));
-        rightPane.setMaxWidth(370);
-        rightPane.setMinHeight(747);
         
         // THIS WILL MANAGE ALL EDITING EVENTS
 	pageEditController = new PageEditController((jClassDesigner) app);
