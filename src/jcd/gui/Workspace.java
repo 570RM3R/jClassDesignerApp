@@ -172,13 +172,14 @@ public class Workspace extends AppWorkspaceComponent {
         
         // THESE ARE THE MAIN TWO PANES OF THE APPLICATION
         leftPane = new Pane();
-        leftPane.setMinSize(bounds.getWidth() - 395, bounds.getHeight());
+        leftPane.setMinSize(bounds.getWidth() - 376, bounds.getHeight());
         zoomingPane = new ZoomingPane(leftPane);
         ScrollPane leftScrollPane = new ScrollPane(zoomingPane);
-        leftScrollPane.setMinSize(bounds.getWidth() - 395, bounds.getHeight() - 78);
-        leftScrollPane.setMaxSize(bounds.getWidth() - 395, bounds.getHeight() - 78);
+        leftScrollPane.setMinSize(bounds.getWidth() - 376, bounds.getHeight() - 78);
+        leftScrollPane.setMaxSize(bounds.getWidth() - 376, bounds.getHeight() - 78);
         rightPane = new VBox(20);
         rightPane.setPadding(new Insets(8, 12, 8, 12));
+        rightPane.setMaxWidth(366);
         
         // THIS WILL MANAGE ALL EDITING EVENTS
 	pageEditController = new PageEditController((jClassDesigner) app);
