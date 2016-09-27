@@ -10,6 +10,8 @@ import javafx.collections.ObservableList;
 import javafx.scene.Parent;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 
 /**
@@ -44,15 +46,19 @@ public class Diagram extends Parent{
         nameSection = new Rectangle(125, 30);
         nameSection.setX(x - 66.5);
         nameSection.setY(y - 15);
-        nameText = new Text(nameString);       
+        nameSection.setStrokeWidth(1.3);
+        nameText = new Text(nameString);
+        nameText.setFont(Font.font("Verdana", FontWeight.BOLD, 12));
         headingText = new Text();
         this.packageName = packageName;
         this.isAbstract = isAbstract;
         this.isInterface = isInterface;
         this.isAbriged = isAbriged;
         variableSection = new Rectangle();
+        variableSection.setStrokeWidth(1.3);
         variableText = new Text();
         methodSection = new Rectangle();
+        methodSection.setStrokeWidth(1.3);
         methodText = new Text();
         this.variableData = variableData;
         this.methodData = methodData;
@@ -62,7 +68,7 @@ public class Diagram extends Parent{
         this.relationshipData = relationshipData;
         this.connectorData = connectorData;
         setStroke(Color.BLACK);
-        setFill(Color.web("#e0eae1"));
+        setFill(Color.web("#eae0e0"));
         if(this.isAbstract || this.isInterface)
             updateHeadingText();
         if(!this.isAbriged) {

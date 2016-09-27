@@ -198,6 +198,7 @@ public class Connector extends Group{
         Line previousLine;
         for (int i = 0; i < number; i++) {
             Line line = new Line();
+            line.setStrokeWidth(1.5);
             Anchor anchor;
             Color transparent = new Color(1, 1, 1, 0);
             if (isFirst && i == 0) {
@@ -490,21 +491,25 @@ public class Connector extends Group{
                 case 31:
                     points.addAll(x.get(), y.get(), x.get(), y.get()-10, x.get()-5, y.get(), x.get(), y.get()-10, x.get()+5, y.get(), x.get(), y.get()-10);
                     getPoints().addAll(points);
+                    setStrokeWidth(1.5);
                     break;
                 // Arrow right
                 case 32:
                     points.addAll(x.get(), y.get(), x.get()+10, y.get(), x.get(), y.get()-5, x.get()+10, y.get(), x.get(), y.get()+5, x.get()+10, y.get());
                     getPoints().addAll(points);
+                    setStrokeWidth(1.5);
                     break;
                 // Arrow down
                 case 33:
                     points.addAll(x.get(), y.get(), x.get(), y.get()+10, x.get()-5, y.get(), x.get(), y.get()+10, x.get()+5, y.get(), x.get(), y.get()+10);
                     getPoints().addAll(points);
+                    setStrokeWidth(1.5);
                     break;
                 // Arrow left
                 default:
                     points.addAll(x.get(), y.get(), x.get()-10, y.get(), x.get(), y.get()-5, x.get()-10, y.get(), x.get(), y.get()+5, x.get()-10, y.get());
                     getPoints().addAll(points);
+                    setStrokeWidth(1.5);
                     break;
             }
             x.bind(layoutXProperty().add(x.get()));
