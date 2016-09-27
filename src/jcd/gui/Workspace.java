@@ -467,6 +467,14 @@ public class Workspace extends AppWorkspaceComponent {
     public ComboBox getParentComboBox() {
         return parentComboBox;
     }
+    
+    public TableView<Variable> getVariableTableView() {
+        return variableTableView;
+    }
+    
+    public TableView<Method> getMethodTableView() {
+        return methodTableView;
+    }
  
     /**
      * This function specifies the CSS style classes for all the UI components

@@ -296,6 +296,8 @@ public class PageEditController {
                 workspace.getNameTextField().setText("");
                 workspace.getPackageTextField().setText("");
                 workspace.getParentComboBox().setValue("");
+                workspace.getVariableTableView().setItems(null);
+                workspace.getMethodTableView().setItems(null);
                 index = -1;
             }
             // Search whether any item lies in the clicked region
