@@ -47,6 +47,7 @@ public class Diagram extends Parent{
         nameSection.setX(x - 66.5);
         nameSection.setY(y - 15);
         nameSection.setStrokeWidth(1.3);
+        nameSection.setFill(Color.web("#ffe6f2"));
         nameText = new Text(nameString);
         nameText.setFont(Font.font("Verdana", FontWeight.BOLD, 12));
         headingText = new Text();
@@ -56,9 +57,11 @@ public class Diagram extends Parent{
         this.isAbriged = isAbriged;
         variableSection = new Rectangle();
         variableSection.setStrokeWidth(1.3);
+        variableSection.setFill(Color.web("#e6e6ff"));
         variableText = new Text();
         methodSection = new Rectangle();
         methodSection.setStrokeWidth(1.3);
+        methodSection.setFill(Color.web("#f6f6ee"));
         methodText = new Text();
         this.variableData = variableData;
         this.methodData = methodData;
@@ -68,7 +71,6 @@ public class Diagram extends Parent{
         this.relationshipData = relationshipData;
         this.connectorData = connectorData;
         setStroke(Color.BLACK);
-        setFill(Color.web("#eae0e0"));
         if(this.isAbstract || this.isInterface)
             updateHeadingText();
         if(!this.isAbriged) {
