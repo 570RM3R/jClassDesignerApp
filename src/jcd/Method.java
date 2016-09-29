@@ -155,7 +155,7 @@ public class Method {
                 methodString += "+ ";
                 break;
             case "private":
-                methodString += "- ";
+                methodString += "― ";
                 break;
             case "protected":
                 methodString += "# ";

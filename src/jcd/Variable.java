@@ -89,7 +89,7 @@ public class Variable {
                 variableString += "+ ";
                 break;
             case "private":
-                variableString += "- ";
+                variableString += "― ";
                 break;
             case "protected":
                 variableString += "# ";

@@ -57,7 +57,7 @@ public class ZoomingPane extends Pane {
         public final void setZoomFactor(Double zoomFactor) {
             this.zoomFactor.set(zoomFactor);
         }
-        public final DoubleProperty zoomFactorProperty() {
+        public final DoubleProperty getZoomFactorProperty() {
             return zoomFactor;
         }
     }

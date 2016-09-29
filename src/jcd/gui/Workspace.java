@@ -78,6 +78,7 @@ public class Workspace extends AppWorkspaceComponent {
     // The pane for editing options
     Pane leftPane;
     ZoomingPane zoomingPane;
+    ScrollPane leftScrollPane;
     VBox rightPane;
     GridPane infoGridPaneOne;
     GridPane infoGridPaneTwo;
@@ -174,7 +175,7 @@ public class Workspace extends AppWorkspaceComponent {
         leftPane = new Pane();
         leftPane.setMinSize(bounds.getWidth() - 376, bounds.getHeight());
         zoomingPane = new ZoomingPane(leftPane);
-        ScrollPane leftScrollPane = new ScrollPane(zoomingPane);
+        leftScrollPane = new ScrollPane(zoomingPane);
         leftScrollPane.setMinSize(bounds.getWidth() - 376, bounds.getHeight() - 78);
         leftScrollPane.setMaxSize(bounds.getWidth() - 376, bounds.getHeight() - 78);
         rightPane = new VBox(20);
@@ -197,7 +198,9 @@ public class Workspace extends AppWorkspaceComponent {
         redoButton = gui.initChildButton(gui.getToolbarPane(), REDO_ICON.toString(), REDO_TOOLTIP.toString(), false);
         gui.getToolbarPane().getChildren().add(new Separator(VERTICAL));
         zoomSlider = new Slider(0.5,2,1);
-        zoomingPane.zoomFactorProperty().bind(zoomSlider.valueProperty());
+        zoomingPane.getZoomFactorProperty().bind(zoomSlider.valueProperty());
+        //leftPane.prefHeightProperty().bind(zoomSlider.valueProperty());
+        //leftPane.prefWidthProperty().bind(zoomSlider.valueProperty());
         gridCheckBox = new CheckBox("Grid");
         snapCheckBox = new CheckBox("Snap");
         gui.getToolbarPane().getChildren().addAll(zoomSlider, gridCheckBox, snapCheckBox, new Separator(VERTICAL));
