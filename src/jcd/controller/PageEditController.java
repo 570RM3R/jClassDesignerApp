@@ -140,6 +140,10 @@ public class PageEditController {
                 String filePath = packagePath + File.separator + tempDiagram.getNameText().getText() + ".java";
                 try (PrintWriter writer = createJavaSourceCode(tempDiagram, filePath, tempDiagram.getNameText().getText(), false)) {
                     writer.println();
+                    for(Variable variable : tempDiagram.getVariableData()) {
+                        writer.println("\t" + variable.exportString() + ";");
+                    }
+                    writer.println();
                     for(Method method : tempDiagram.getMethodData()) {
                         writer.println("\t" + method.exportString() + (method.isAbstract().equals("true") ? "" : " {"));
                         if(!method.getReturnType().isEmpty()) {
