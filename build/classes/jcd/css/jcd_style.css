@@ -56,12 +56,6 @@ and open the template in the editor.
 
 // CSS CLASS FOR LABELS HEADING LARGE SECTIONS IN THE GUI
 .heading_label {
-    -fx-font-size: 15pt;
-    -fx-font-weight:bold;
-}
-
-// CSS CLASS FOR LABELS HEADING SUBSECTIONS IN THE GUI
-.subheading_label {
     -fx-font-size: 13pt;
     -fx-font-weight:bold;
 }

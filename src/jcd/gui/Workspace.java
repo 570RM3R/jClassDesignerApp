@@ -489,10 +489,10 @@ public class Workspace extends AppWorkspaceComponent {
     public void initStyle() {
         parentComboBox.getStyleClass().add(CLASS_COMBO_BOX);
         nameLabel.getStyleClass().add(CLASS_HEADING_TEXT);
-        packageLabel.getStyleClass().add(CLASS_SUB_HEADING_TEXT);
-        parentLabel.getStyleClass().add(CLASS_SUB_HEADING_TEXT);
-        variablesLabel.getStyleClass().add(CLASS_SUB_HEADING_TEXT);
-        methodsLabel.getStyleClass().add(CLASS_SUB_HEADING_TEXT);
+        packageLabel.getStyleClass().add(CLASS_HEADING_TEXT);
+        parentLabel.getStyleClass().add(CLASS_HEADING_TEXT);
+        variablesLabel.getStyleClass().add(CLASS_HEADING_TEXT);
+        methodsLabel.getStyleClass().add(CLASS_HEADING_TEXT);
         rightPane.getStyleClass().add(CLASS_BORDER_PANE);
         
     }

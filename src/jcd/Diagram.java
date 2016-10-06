@@ -260,8 +260,6 @@ public class Diagram extends Parent{
         this.packageName = packageName;
         if(packageName.contains("java.") || packageName.contains("javax.") || packageName.contains("javaf.") || packageName.contains("javafx.")) {
             isGeneric = true;
-            variableData.clear();
-            methodData.clear();
             nameSection.setFill(Color.web("#d2d2d2"));
         }
         else {

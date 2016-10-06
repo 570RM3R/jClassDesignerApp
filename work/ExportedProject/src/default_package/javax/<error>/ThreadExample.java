@@ -1,9 +1,10 @@
-package default_package.files.thread;
+package default_package.javax.;
 
 import default_package.Application;
 import default_package.ApplicationLayer;
+import default_package.sdfasdfadsf;
 
-public class ThreadExample extends Application implements ApplicationLayer {
+public class ThreadExample extends Application implements ApplicationLayer implements sdfasdfadsf {
 
 	public String START_TEXT;
 	public String PAUSE_TEXT;
