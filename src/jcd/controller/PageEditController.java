@@ -401,6 +401,10 @@ public class PageEditController {
         if (index != -1 && pane.getChildren().get(index) instanceof Diagram){
             diagram = (Diagram)pane.getChildren().get(index);
             diagram.setPackageName(packageName);
+            diagram.updateVariableText();
+            diagram.updateMethodText();
+            diagram.dynamicResize();
+            diagram.dynamicPosition();
             createVersion();
         }
     }
@@ -741,7 +745,7 @@ public class PageEditController {
     private Diagram finishAddingDiagram(double x, double y, String name, String packageName, boolean isInterface) {
         Workspace workspace = (Workspace) app.getWorkspaceComponent();
         Pane pane = workspace.getLeftPane();
-        Diagram newDiagram = new Diagram(-1, x, y, name, packageName, isInterface, false, false, FXCollections.observableArrayList(),
+        Diagram newDiagram = new Diagram(-1, x, y, name, packageName, false, isInterface, false, false, FXCollections.observableArrayList(),
                 FXCollections.observableArrayList(), new ArrayList(), new ArrayList(), new ArrayList(), new ArrayList());
         if(snapEnabled)
                 newDiagram.setPosition((int)(newDiagram.getNameSection().getX()/10)*10, (int)(newDiagram.getNameSection().getY()/10)*10);

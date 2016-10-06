@@ -2,8 +2,6 @@ package default_package.files.thread;
 
 import default_package.Application;
 import default_package.ApplicationLayer;
-import default_package.BorderPane;
-import default_package.Stage;
 
 public class ThreadExample extends Application implements ApplicationLayer {
 

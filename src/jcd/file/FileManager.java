@@ -62,6 +62,7 @@ public class FileManager implements AppFileComponent {
     public static final String JSON_Y = "y";
     public static final String JSON_NAME = "name";
     public static final String JSON_IS_INTERFACE = "is_interface";
+    public static final String JSON_IS_GENERIC = "is_generic";
     public static final String JSON_PACKAGE_NAME = "package_name";
     public static final String JSON_VARIABLE_DATA = "variable_data";
     public static final String JSON_METHOD_DATA = "method_data";
@@ -157,6 +158,7 @@ public class FileManager implements AppFileComponent {
 		.add(JSON_Y, diagram.getNameSection().getY() + 15)
 		.add(JSON_NAME, diagram.getNameText().getText())
                 .add(JSON_PACKAGE_NAME, diagram.getPackageName())
+                .add(JSON_IS_GENERIC, diagram.isGeneric() ? 1 : 0)
 		.add(JSON_IS_INTERFACE, diagram.isInterface() ? 1 : 0)
                 .add(JSON_IS_ABSTRACT, diagram.isAbstract()? 1 : 0)
                 .add(JSON_IS_ABRIGED, diagram.isAbriged()? 1 : 0)
@@ -306,6 +308,7 @@ public class FileManager implements AppFileComponent {
                 jsonObject.getInt(JSON_Y),
                 jsonObject.getString(JSON_NAME),
                 jsonObject.getString(JSON_PACKAGE_NAME),
+                jsonObject.getInt(JSON_IS_GENERIC) == 1,
                 jsonObject.getInt(JSON_IS_INTERFACE) == 1,
                 jsonObject.getInt(JSON_IS_ABSTRACT) == 1,
                 jsonObject.getInt(JSON_IS_ABRIGED) == 1,

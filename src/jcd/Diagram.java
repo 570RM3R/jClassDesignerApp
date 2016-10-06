@@ -28,6 +28,7 @@ public class Diagram extends Parent{
     Text variableText;
     Text methodText;
     String packageName;
+    boolean isGeneric;
     boolean isInterface;
     boolean isAbstract;
     boolean isAbriged;
@@ -39,9 +40,9 @@ public class Diagram extends Parent{
     ArrayList<Integer> relationshipData;
     ArrayList<Integer> connectorData;
     
-    public Diagram(int diagramId, double x, double y, String nameString, String packageName, boolean isInterface, boolean isAbstract,
-            boolean isAbriged, ObservableList<Variable> variableData, ObservableList<Method> methodData, ArrayList<Integer> inheritanceData,
-            ArrayList<Integer> aggregationData, ArrayList<Integer> relationshipData, ArrayList<Integer> connectorData) {
+    public Diagram(int diagramId, double x, double y, String nameString, String packageName, boolean isGeneric, boolean isInterface,
+            boolean isAbstract, boolean isAbriged, ObservableList<Variable> variableData, ObservableList<Method> methodData,
+            ArrayList<Integer> inheritanceData, ArrayList<Integer> aggregationData, ArrayList<Integer> relationshipData, ArrayList<Integer> connectorData) {
         this.diagramId = diagramId == -1 ? Diagram.idCounter : diagramId;
         nameSection = new Rectangle(125, 30);
         nameSection.setX(x - 66.5);
@@ -52,6 +53,7 @@ public class Diagram extends Parent{
         nameText.setFont(Font.font("Verdana", FontWeight.BOLD, 12));
         headingText = new Text();
         this.packageName = packageName;
+        this.isGeneric = isGeneric;
         this.isAbstract = isAbstract;
         this.isInterface = isInterface;
         this.isAbriged = isAbriged;
@@ -88,15 +90,23 @@ public class Diagram extends Parent{
         nameSection = new Rectangle(125, 30);
         nameSection.setX(diagram.getNameSection().getX());
         nameSection.setY(diagram.getNameSection().getY());
-        nameText = new Text(diagram.getNameText().getText());       
+        nameSection.setStrokeWidth(1.3);
+        nameSection.setFill(Color.web("#ffe6f2"));
+        nameText = new Text(diagram.getNameText().getText());  
+        nameText.setFont(Font.font("Verdana", FontWeight.BOLD, 12));
         headingText = new Text();
         packageName = diagram.getPackageName();
+        isGeneric = diagram.isGeneric();
         isAbstract = diagram.isAbstract();
         isInterface = diagram.isInterface();
         isAbriged = diagram.isAbriged();
         variableSection = new Rectangle();
+        variableSection.setStrokeWidth(1.3);
+        variableSection.setFill(Color.web("#e6e6ff"));
         variableText = new Text();
         methodSection = new Rectangle();
+        methodSection.setStrokeWidth(1.3);
+        methodSection.setFill(Color.web("#f6f6ee"));
         methodText = new Text();
         variableData = diagram.getClonedVariableData();
         methodData = diagram.getClonedMethodData();
@@ -106,7 +116,6 @@ public class Diagram extends Parent{
         relationshipData = (ArrayList<Integer>)diagram.getRelationshipData().clone();
         connectorData = (ArrayList<Integer>)diagram.getConnectorData().clone();
         setStroke(Color.BLACK);
-        setFill(Color.web("#e0eae1"));
         if(this.isAbstract || this.isInterface)
             updateHeadingText();
         if(!this.isAbriged) {
@@ -183,6 +192,10 @@ public class Diagram extends Parent{
         return packageName;
     }
     
+    public boolean isGeneric() {
+        return isGeneric;
+    }
+    
     public boolean isInterface() {
         return isInterface;
     }
@@ -245,6 +258,16 @@ public class Diagram extends Parent{
     
     public void setPackageName(String packageName) {
         this.packageName = packageName;
+        if(packageName.contains("java.") || packageName.contains("javax.") || packageName.contains("javaf.") || packageName.contains("javafx.")) {
+            isGeneric = true;
+            variableData.clear();
+            methodData.clear();
+            nameSection.setFill(Color.web("#d2d2d2"));
+        }
+        else {
+            isGeneric = false;
+            nameSection.setFill(Color.web("#ffe6f2"));
+        }
     }
     
     public static void setIdCounter(int idCounter) {
