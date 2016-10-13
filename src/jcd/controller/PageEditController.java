@@ -129,45 +129,48 @@ public class PageEditController {
             String packagePath = folderPath;
             if(pane.getChildren().get(i) instanceof Diagram) {
                 Diagram tempDiagram = (Diagram) pane.getChildren().get(i);
-                // Create appropriate directory for the java source code
-                if(!tempDiagram.getPackageName().isEmpty()) {
-                    String packageToken[] = tempDiagram.getPackageName().split("\\.");
-                    for(String token : packageToken) {
-                        packagePath += File.separator + token;
-                    }
-                }
-                // Create java source code file
-                String filePath = packagePath + File.separator + tempDiagram.getNameText().getText() + ".java";
-                try (PrintWriter writer = createJavaSourceCode(tempDiagram, filePath, tempDiagram.getNameText().getText(), false)) {
-                    writer.println();
-                    for(Variable variable : tempDiagram.getVariableData()) {
-                        writer.println("\t" + variable.exportString() + ";");
-                    }
-                    writer.println();
-                    for(Method method : tempDiagram.getMethodData()) {
-                        writer.println("\t" + method.exportString() + (method.isAbstract().equals("true") ? "" : " {"));
-                        if(!method.getReturnType().isEmpty()) {
-                            if(method.getReturnType().equals("char")) {
-                                writer.println("\t\treturn Character.UNASSIGNED;");
-                            }
-                            else if(method.getReturnType().equals("boolean")) {
-                                writer.println("\t\treturn true;");
-                            }
-                            else if(method.getReturnType().equals("String")) {
-                                writer.println("\t\treturn \"\";");
-                            }
-                            else if(isPrimitive(method.getReturnType())) {
-                                writer.println("\t\t" + method.getReturnType() + " returnedObject = 0;\n\t\treturn returnedObject;");
-                            }
-                            else if(!method.getReturnType().equals("void")) {
-                                writer.println("\t\treturn new " + method.getReturnType() + "();");
-                                createJavaSourceCode(tempDiagram, packagePath + File.separator +
-                                        method.getReturnType() + ".java", method.getReturnType(), true);
-                            }
+                if(!tempDiagram.isGeneric()) {
+                    // Create appropriate directory for the java source code
+                    if(!tempDiagram.getPackageName().isEmpty()) {
+                        String packageToken[] = tempDiagram.getPackageName().split("\\.");
+                        for(String token : packageToken) {
+                            packagePath += File.separator + token;
                         }
-                        writer.println(method.isAbstract().equals("true") ? ";" :"\t}");
                     }
-                    writer.print("}");
+                    // Create java source code file
+                    String filePath = packagePath + File.separator + tempDiagram.getNameText().getText() + ".java";
+                    try (PrintWriter writer = createJavaSourceCode(tempDiagram, filePath, tempDiagram.getNameText().getText(), false)) {
+                        writer.println();
+                        // Write the variable data
+                        for(Variable variable : tempDiagram.getVariableData()) {
+                            writer.println("\t" + variable.exportString() + ";");
+                        }
+                        writer.println();
+                        // Write the method data
+                        for(Method method : tempDiagram.getMethodData()) {
+                            writer.println("\t" + method.exportString() + (method.isAbstract().equals("true") ? "" : " {"));
+                            if(!method.getReturnType().isEmpty()) {
+                                if(method.getReturnType().equals("char")) {
+                                    writer.println("\t\treturn Character.UNASSIGNED;");
+                                }
+                                else if(method.getReturnType().equals("boolean")) {
+                                    writer.println("\t\treturn true;");
+                                }
+                                else if(method.getReturnType().equals("String")) {
+                                    writer.println("\t\treturn \"\";");
+                                }
+                                else if(isPrimitive(method.getReturnType())) {
+                                    writer.println("\t\t" + method.getReturnType() + " returnedObject = 0;\n\t\treturn returnedObject;");
+                                }
+                                else if(!method.getReturnType().equals("void")) {
+                                    writer.println("\t\treturn new " + method.getReturnType() + "();");
+                                    createJavaSourceCode(tempDiagram, packagePath + File.separator + method.getReturnType() + ".java", method.getReturnType(), true);
+                                }
+                            }
+                            writer.println(method.isAbstract().equals("true") ? ";" :"\t}");
+                        }
+                        writer.print("}");
+                    }
                 }
             }
         }
@@ -599,10 +602,34 @@ public class PageEditController {
     
     private String getImportString(Diagram diagram) {
         String importString = "";
+        // Import statements for inheritance data 
         for(int i = 0; i < diagram.getInheritanceData().size(); i++) {
             Diagram parent = findDiagram(diagram.getInheritanceData().get(i));
             if(parent != null) {
-                importString += "import default_package." + parent.getNameText().getText() + ";\n";
+                if(parent.getPackageName().isEmpty())
+                    importString += "import default_package." + parent.getNameText().getText() + ";\n";
+                else
+                    importString += "import " + parent.getPackageName() + ";\n";
+            }
+        }
+        // Import statements for aggregation data 
+        for(int i = 0; i < diagram.getAggregationData().size(); i++) {
+            Diagram aggregatedDiagram = findDiagram(diagram.getAggregationData().get(i));
+            if(aggregatedDiagram != null) {
+                if(aggregatedDiagram.getPackageName().isEmpty())
+                    importString += "import default_package." + aggregatedDiagram.getNameText().getText() + ";\n";
+                else
+                    importString += "import " + aggregatedDiagram.getPackageName() + ";\n";
+            }
+        }
+        // Import statements for relationship data 
+        for(int i = 0; i < diagram.getRelationshipData().size(); i++) {
+            Diagram relatedDiagram = findDiagram(diagram.getRelationshipData().get(i));
+            if(relatedDiagram != null) {
+                if(relatedDiagram.getPackageName().isEmpty())
+                    importString += "import default_package." + relatedDiagram.getNameText().getText() + ";\n";
+                else
+                    importString += "import " + relatedDiagram.getPackageName() + ";\n";
             }
         }
         importString += "\n";
@@ -615,21 +642,25 @@ public class PageEditController {
         Pane pane = workspace.getLeftPane();
         if (index != -1 && pane.getChildren().get(index) instanceof Diagram){
             switch(option) {
+                // Variable name is updated
                 case 1:
                     ((Variable)tableColumn.getTableView().getItems().get(tableColumn.getTablePosition().getRow())).setVariableName(tableColumn.getNewValue());
                     break;
+                // Variable type is updated
                 case 2:
                     ((Variable)tableColumn.getTableView().getItems().get(tableColumn.getTablePosition().getRow())).setTypeName(tableColumn.getNewValue());
                     Diagram tempDiagram = findDiagram(tableColumn.getNewValue());
                     if(tempDiagram == null && !isPrimitive(tableColumn.getNewValue())) {
-                        tempDiagram = finishAddingDiagram(diagram.getNameSection().getX() - 280, diagram.getNameSection().getY(), tableColumn.getNewValue(), diagram.getPackageName(), false);
+                        tempDiagram = finishAddingDiagram(diagram.getNameSection().getX() - 280, diagram.getNameSection().getY(), tableColumn.getNewValue(), "", false);
                         finishAddingConnector(tempDiagram, diagram, 12);
-                        tempDiagram.addAggregationData(diagram.getDiagramId());
+                        diagram.addAggregationData(tempDiagram.getDiagramId());
                     }
                     break;
+                // Variable staticity is updated
                 case 3:
                     ((Variable)tableColumn.getTableView().getItems().get(tableColumn.getTablePosition().getRow())).setStatic(tableColumn.getNewValue());
                     break;
+                // Variable access type is updated
                 case 4:
                     ((Variable)tableColumn.getTableView().getItems().get(tableColumn.getTablePosition().getRow())).setAccessType(tableColumn.getNewValue());
                     break;
@@ -647,30 +678,36 @@ public class PageEditController {
         Pane pane = workspace.getLeftPane();
         if (index != -1 && pane.getChildren().get(index) instanceof Diagram){
             switch(option) {
+                // Method name is updated
                 case 1:
                     ((Method)tableColumn.getTableView().getItems().get(tableColumn.getTablePosition().getRow())).setMethodName(tableColumn.getNewValue());
                     break;
+                // Method return type is updated
                 case 2:
                     ((Method)tableColumn.getTableView().getItems().get(tableColumn.getTablePosition().getRow())).setReturnType(tableColumn.getNewValue());
                     Diagram tempDiagram = findDiagram(tableColumn.getNewValue());
                     if(tempDiagram == null && !isPrimitive(tableColumn.getNewValue()) && !tableColumn.getNewValue().equals("void")) {
-                        tempDiagram = finishAddingDiagram(diagram.getNameSection().getX() - 280, diagram.getNameSection().getY(), tableColumn.getNewValue(), diagram.getPackageName(), false);
+                        tempDiagram = finishAddingDiagram(diagram.getNameSection().getX() - 280, diagram.getNameSection().getY(), tableColumn.getNewValue(), "", false);
                         finishAddingConnector(diagram, tempDiagram, 13);
                         diagram.addRelationshipData(tempDiagram.getDiagramId());
                     }
                     break;
+                // Method staticity is updated
                 case 3:
                     ((Method)tableColumn.getTableView().getItems().get(tableColumn.getTablePosition().getRow())).setStatic(tableColumn.getNewValue());
                     break;
+                // Method abstractivity is updated
                 case 4:
                     ((Method)tableColumn.getTableView().getItems().get(tableColumn.getTablePosition().getRow())).setAbstract(tableColumn.getNewValue());
                     diagram.setAbstract(true);
                     diagram.updateHeadingText();
                     diagram.dynamicPosition();
                     break;
+                // Method access type is updated
                 case 5:
                     ((Method)tableColumn.getTableView().getItems().get(tableColumn.getTablePosition().getRow())).setAccessType(tableColumn.getNewValue());
                     break;
+                // Method argument 1 is updated
                 case 6:
                     ((Method)tableColumn.getTableView().getItems().get(tableColumn.getTablePosition().getRow())).setArgumentOne(tableColumn.getNewValue());
                     tempDiagram = findDiagram(tableColumn.getNewValue().split(" ")[0]);
@@ -680,6 +717,7 @@ public class PageEditController {
                         diagram.addRelationshipData(tempDiagram.getDiagramId());
                     }
                     break;
+                // Method argument 2 is updated
                 case 7:
                     ((Method)tableColumn.getTableView().getItems().get(tableColumn.getTablePosition().getRow())).setArgumentTwo(tableColumn.getNewValue());
                     tempDiagram = findDiagram(tableColumn.getNewValue().split(" ")[0]);
@@ -689,6 +727,7 @@ public class PageEditController {
                         diagram.addRelationshipData(tempDiagram.getDiagramId());
                     }
                     break;
+                // Method argument 3 is updated
                 case 8:
                     ((Method)tableColumn.getTableView().getItems().get(tableColumn.getTablePosition().getRow())).setArgumentThree(tableColumn.getNewValue());
                     tempDiagram = findDiagram(tableColumn.getNewValue().split(" ")[0]);
@@ -758,6 +797,7 @@ public class PageEditController {
     private Connector finishAddingConnector(Diagram source, Diagram destination, int type) {
         Workspace workspace = (Workspace) app.getWorkspaceComponent();
         Pane pane = workspace.getLeftPane();
+        //
         int[] connectorData = new int[3];
         // Destination is straight top
         if(Math.abs(source.getConnectionX(1) - destination.getConnectionX(1)) < 10 && source.getConnectionY(1) > destination.getConnectionY(1)) {

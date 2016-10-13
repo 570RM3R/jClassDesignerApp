@@ -1,18 +1,21 @@
-package default_package.javax.;
+package default_package.files.thread;
 
 import default_package.Application;
 import default_package.ApplicationLayer;
-import default_package.sdfasdfadsf;
+import default_package.Bingo;
+import default_package.Stage;
+import default_package.BorderPane;
+import default_package.Thread;
 
-public class ThreadExample extends Application implements ApplicationLayer implements sdfasdfadsf {
+public class ThreadExample extends Application implements ApplicationLayer implements Bingo {
 
-	public String START_TEXT;
-	public String PAUSE_TEXT;
+	private boolean work;
 	private Stage window;
 	private double startTime;
-	private double endTime;
+	public String START_TEXT;
 	protected int slotRemaining;
-	private boolean work;
+	public String PAUSE_TEXT;
+	private double endTime;
 	private BorderPane appPane;
 
 	public  ThreadExample(double startTime, double endTime, boolean work) {

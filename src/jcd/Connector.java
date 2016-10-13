@@ -465,25 +465,25 @@ public class Connector extends Group{
                     break;
                 // Diamond up
                 case 21:
-                    points.addAll(x.get(), y.get(), x.get()+3.5, y.get()-5, x.get(), y.get()-10, x.get()-3.5, y.get()-5, x.get(), y.get());
+                    points.addAll(x.get(), y.get(), x.get()+4.5, y.get()-5, x.get(), y.get()-10, x.get()-4.5, y.get()-5, x.get(), y.get());
                     getPoints().addAll(points);
                     setFill(Color.BLACK);
                     break;
                 // Diamond right
                 case 22:
-                    points.addAll(x.get(), y.get(), x.get()+5, y.get()-3.5, x.get()+10, y.get(), x.get()+5, y.get()+3.5, x.get(), y.get());
+                    points.addAll(x.get(), y.get(), x.get()+5, y.get()-4.5, x.get()+10, y.get(), x.get()+5, y.get()+4.5, x.get(), y.get());
                     getPoints().addAll(points);
                     setFill(Color.BLACK);
                     break;
                 // Diamond down
                 case 23:
-                    points.addAll(x.get(), y.get(), x.get()+3.5, y.get()+5, x.get(), y.get()+10, x.get()-3.5, y.get()+5, x.get(), y.get());
+                    points.addAll(x.get(), y.get(), x.get()+4.5, y.get()+5, x.get(), y.get()+10, x.get()-4.5, y.get()+5, x.get(), y.get());
                     getPoints().addAll(points);
                     setFill(Color.BLACK);
                     break;
                 // Diamond left
                 case 24:
-                    points.addAll(x.get(), y.get(), x.get()-5, y.get()-3.5, x.get()-10, y.get(), x.get()-5, y.get()+3.5, x.get(), y.get());
+                    points.addAll(x.get(), y.get(), x.get()-5, y.get()-4.5, x.get()-10, y.get(), x.get()-5, y.get()+4.5, x.get(), y.get());
                     getPoints().addAll(points);
                     setFill(Color.BLACK);
                     break;

@@ -144,7 +144,7 @@
                 }
             ],
             "inheritance_data":"30, 31",
-            "aggregation_data":"",
+            "aggregation_data":"1, 4",
             "relationship_data":"17",
             "connector_data":"0, 2, 11, 23, 25"
         },
@@ -163,7 +163,7 @@
             "method_data":[
             ],
             "inheritance_data":"",
-            "aggregation_data":"0",
+            "aggregation_data":"",
             "relationship_data":"",
             "connector_data":"0"
         },
@@ -195,7 +195,7 @@
             "method_data":[
             ],
             "inheritance_data":"",
-            "aggregation_data":"0",
+            "aggregation_data":"",
             "relationship_data":"",
             "connector_data":"2"
         },
