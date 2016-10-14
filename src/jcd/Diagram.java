@@ -49,7 +49,6 @@ public class Diagram extends Parent{
         nameSection.setX(x - 66.5);
         nameSection.setY(y - 15);
         nameSection.setStrokeWidth(1.3);
-        nameSection.setFill(Color.web("#e5e5cd"));
         nameText = new Text(nameString);
         nameText.setFont(Font.font("Verdana", FontWeight.BOLD, 12));
         headingText = new Text();
@@ -60,12 +59,20 @@ public class Diagram extends Parent{
         this.isAbriged = isAbriged;
         variableSection = new Rectangle();
         variableSection.setStrokeWidth(1.3);
-        variableSection.setFill(Color.web("#f6f6ee"));
         variableText = new Text();
         methodSection = new Rectangle();
         methodSection.setStrokeWidth(1.3);
-        methodSection.setFill(Color.web("#f6f6ee"));
         methodText = new Text();
+        if(isGeneric) {
+            nameSection.setFill(Color.web("#d1d1e0"));
+            variableSection.setFill(Color.web("#f0f0f5"));
+            methodSection.setFill(Color.web("#f0f0f5"));
+        }
+        else {
+            nameSection.setFill(Color.web("#e5e5cd"));
+            variableSection.setFill(Color.web("#f6f6ee"));
+            methodSection.setFill(Color.web("#f6f6ee"));
+        }
         this.variableData = variableData;
         this.methodData = methodData;
         getChildren().addAll(nameSection, headingText, nameText, variableSection, variableText, methodSection, methodText);
@@ -93,7 +100,6 @@ public class Diagram extends Parent{
         nameSection.setX(diagram.getNameSection().getX());
         nameSection.setY(diagram.getNameSection().getY());
         nameSection.setStrokeWidth(1.3);
-        nameSection.setFill(Color.web("#e5e5cd"));
         nameText = new Text(diagram.getNameText().getText());  
         nameText.setFont(Font.font("Verdana", FontWeight.BOLD, 12));
         headingText = new Text();
@@ -104,12 +110,20 @@ public class Diagram extends Parent{
         isAbriged = diagram.isAbriged();
         variableSection = new Rectangle();
         variableSection.setStrokeWidth(1.3);
-        variableSection.setFill(Color.web("#f6f6ee"));
         variableText = new Text();
         methodSection = new Rectangle();
         methodSection.setStrokeWidth(1.3);
-        methodSection.setFill(Color.web("#f6f6ee"));
         methodText = new Text();
+        if(isGeneric) {
+            nameSection.setFill(Color.web("#d1d1e0"));
+            variableSection.setFill(Color.web("#f0f0f5"));
+            methodSection.setFill(Color.web("#f0f0f5"));
+        }
+        else {
+            nameSection.setFill(Color.web("#e5e5cd"));
+            variableSection.setFill(Color.web("#f6f6ee"));
+            methodSection.setFill(Color.web("#f6f6ee"));
+        }
         variableData = diagram.getClonedVariableData();
         methodData = diagram.getClonedMethodData();
         getChildren().addAll(nameSection, headingText, nameText, variableSection, variableText, methodSection, methodText);
