@@ -275,14 +275,7 @@ public class PageEditController {
     }
     
     public void handleSelectRequest() {
-//        Workspace workspace = (Workspace) app.getWorkspaceComponent();
-//        workspace.reloadWorkspace();
-//        workspace.getSelectionButton().setDisable(false);
-//        workspace.getRectangleButton().setDisable(false);
-//        workspace.getEllipseButton().setDisable(false);
-//        workspace.getremoveButton().setDisable(true);
-//        workspace.getDownButton().setDisable(true);
-//        workspace.getUpButton().setDisable(true);
+        app.getGUI().updateToolbarControls("1111111.1011011");
         Workspace workspace = (Workspace) app.getWorkspaceComponent();
         workspace.reloadWorkspace(index);
         Pane pane = workspace.getLeftPane();
@@ -312,11 +305,19 @@ public class PageEditController {
             yStart = event.getY();
             for (int i = pane.getChildren().size()-1; i >= 0; i --) {
                 if (pane.getChildren().get(i).contains(xStart, yStart)) {
-                    if(pane.getChildren().get(i) instanceof Diagram || pane.getChildren().get(i) instanceof Connector){
+                    if(pane.getChildren().get(i) instanceof Diagram){
                         index = i;
                         app.getGUI().updateToolbarControls("1111111.1111111");
                         break;
                     }
+                    if(pane.getChildren().get(i) instanceof Connector){
+                        index = i;
+                        app.getGUI().updateToolbarControls("1111111.1011111");
+                        break;
+                    }
+                }
+                else {
+                    app.getGUI().updateToolbarControls("1111111.1011011");
                 }
             }
             
@@ -327,7 +328,7 @@ public class PageEditController {
                     workspace.getNameTextField().setText(diagram.getNameText().getText());
                     workspace.getPackageTextField().setText(diagram.getPackageName());
                     workspace.reloadWorkspace(index);
-                    int lastParentId = diagram.getInheritanceData().isEmpty() ? -1 : diagram.getInheritanceData().get(diagram.getInheritanceData().size()-1);
+                    int lastParentId = diagram.getExtensionData().isEmpty() ? -1 : diagram.getExtensionData().get(diagram.getExtensionData().size()-1);
                     Diagram parent = findDiagram(lastParentId);
                     workspace.getParentComboBox().setValue(parent == null ? "" : parent.getNameText().getText());
                 }
@@ -338,10 +339,7 @@ public class PageEditController {
                     workspace.getNameTextField().setText("");
                     workspace.getPackageTextField().setText("");
                     workspace.getParentComboBox().setValue("");
-                }
-//                workspace.getremoveButton().setDisable(false);
-//                workspace.getDownButton().setDisable(false);
-//                workspace.getUpButton().setDisable(false);                  
+                }               
             }
         } ) ;
         
@@ -369,9 +367,7 @@ public class PageEditController {
                 diagram.dynamicPosition();
                 diagram.setLayout(0, 0);
                 setConnectorPosition();
-//                workspace.getremoveButton().setDisable(true);
-//                workspace.getDownButton().setDisable(true);
-//                workspace.getUpButton().setDisable(true);
+                app.getGUI().updateToolbarControls("1111111.1011011");
                 createVersion();
                 index = -1;
                 dragged = false;
@@ -511,17 +507,28 @@ public class PageEditController {
         if (index != -1 && pane.getChildren().get(index) instanceof Diagram){
             diagram = (Diagram)pane.getChildren().get(index);
             Diagram parent = findDiagram(parentName);
-            // Create new parent diagram if it doesn't exist in the workspace
+            // Parent doesn't exist in the workspace, and it's not a premitive class
             if(parent == null && !isPrimitive(parentName)) {
+                // Delete previous parent class links
+                if(!diagram.getExtensionData().isEmpty()) {
+                    removeDiagramDependencies(findDiagram(diagram.getExtensionData().get(0)));
+                    diagram.getExtensionData().clear();
+                }
                 parent = finishAddingDiagram(diagram.getNameSection().getX() + 62.5, diagram.getNameSection().getY() - 180, parentName, diagram.getPackageName(), false);
+                finishAddingConnector(diagram, parent, 11);
             }
-            // Set proper data, and connect the child with the parent
-            if(parent != null && diagram.getDiagramId() != parent.getDiagramId()) {  
-                if (diagram.addInheritanceData(parent.getDiagramId())) {
-                    if(!parent.isInterface())
-                        finishAddingConnector(diagram, parent, 11);
-                    else
-                        finishAddingConnector(diagram, parent, 01);
+            // Parent exists in the workspace, and it's not the class itself
+            else if(parent != null && diagram.getDiagramId() != parent.getDiagramId()) {
+                if(!parent.isInterface() && diagram.addExtensionData(parent.getDiagramId())) {
+                    // Delete previous parent class links
+                    if(!diagram.getExtensionData().isEmpty()) {
+                        removeDiagramDependencies(findDiagram(diagram.getExtensionData().get(0)));
+                        diagram.getExtensionData().clear();
+                    }
+                    finishAddingConnector(diagram, parent, 11);
+                }
+                else if(parent.isInterface() && diagram.addImplementationData(parent.getDiagramId())) {
+                    finishAddingConnector(diagram, parent, 01);
                 }
             }
             createVersion();
@@ -588,13 +595,30 @@ public class PageEditController {
     
     private String getInheritanceString(Diagram diagram) {
         String inheritanceString = "";
-        for(int i = 0; i < diagram.getInheritanceData().size(); i++) {
-            Diagram parent = findDiagram(diagram.getInheritanceData().get(i));
+        boolean flag = false;
+        // For extension data
+        for(int i = 0; i < diagram.getExtensionData().size(); i++) {
+            Diagram parent = findDiagram(diagram.getExtensionData().get(i));
             if(parent != null) {
-                if(parent.isInterface())
-                    inheritanceString += " implements " + parent.getNameText().getText();
-                else
+                if(!flag) {
                     inheritanceString += " extends " + parent.getNameText().getText();
+                    flag = true;
+                }
+                else 
+                    inheritanceString += ", " + parent.getNameText().getText();
+            }
+        }
+        flag = false;
+        // For implementation data
+        for(int i = 0; i < diagram.getImplementationData().size(); i++) {
+            Diagram parent = findDiagram(diagram.getImplementationData().get(i));
+            if(parent != null) {
+                if(!flag) {
+                    inheritanceString += " implements " + parent.getNameText().getText();
+                    flag = true;
+                }
+                else 
+                    inheritanceString += ", " + parent.getNameText().getText();
             }
         }
         return inheritanceString;
@@ -602,9 +626,19 @@ public class PageEditController {
     
     private String getImportString(Diagram diagram) {
         String importString = "";
-        // Import statements for inheritance data 
-        for(int i = 0; i < diagram.getInheritanceData().size(); i++) {
-            Diagram parent = findDiagram(diagram.getInheritanceData().get(i));
+        // Import statements for extension data 
+        for(int i = 0; i < diagram.getExtensionData().size(); i++) {
+            Diagram parent = findDiagram(diagram.getExtensionData().get(i));
+            if(parent != null) {
+                if(parent.getPackageName().isEmpty())
+                    importString += "import default_package." + parent.getNameText().getText() + ";\n";
+                else
+                    importString += "import " + parent.getPackageName() + ";\n";
+            }
+        }
+        // Import statements for implementation data 
+        for(int i = 0; i < diagram.getImplementationData().size(); i++) {
+            Diagram parent = findDiagram(diagram.getImplementationData().get(i));
             if(parent != null) {
                 if(parent.getPackageName().isEmpty())
                     importString += "import default_package." + parent.getNameText().getText() + ";\n";
@@ -756,6 +790,7 @@ public class PageEditController {
                     if(tempConnector.getConnectorId() == diagram.getConnectorData().get(i)) {
                         removeConnectorDependencies(tempConnector);
                         pane.getChildren().remove(j);
+                        break;
                     }
                 }
             }
@@ -769,8 +804,11 @@ public class PageEditController {
             if(pane.getChildren().get(i) instanceof Diagram) {
                 Diagram tempDiagram = (Diagram)pane.getChildren().get(i);
                 if(tempDiagram.getDiagramId() == connector.getSourceId() || tempDiagram.getDiagramId() == connector.getDestinationId()) {
-                    if((connector.getType() % 100) % 10 == 1)
-                        tempDiagram.removeInheritanceData(connector.getDestinationId());
+                    if((connector.getType() % 100) % 10 == 1) {
+                        if (!tempDiagram.removeExtensionData(connector.getDestinationId())) {
+                            tempDiagram.removeImplementationData(connector.getDestinationId());
+                        }
+                    }
                     else if((connector.getType() % 100) % 10 == 2)
                         tempDiagram.removeAggregationData(connector.getDestinationId());
                     else if((connector.getType() % 100) % 10 == 3)
@@ -785,7 +823,7 @@ public class PageEditController {
         Workspace workspace = (Workspace) app.getWorkspaceComponent();
         Pane pane = workspace.getLeftPane();
         Diagram newDiagram = new Diagram(-1, x, y, name, packageName, false, isInterface, false, false, FXCollections.observableArrayList(),
-                FXCollections.observableArrayList(), new ArrayList(), new ArrayList(), new ArrayList(), new ArrayList());
+                FXCollections.observableArrayList(), new ArrayList(), new ArrayList(), new ArrayList(), new ArrayList(), new ArrayList());
         if(snapEnabled)
                 newDiagram.setPosition((int)(newDiagram.getNameSection().getX()/10)*10, (int)(newDiagram.getNameSection().getY()/10)*10);
         pane.getChildren().add(newDiagram);

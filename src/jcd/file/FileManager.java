@@ -17,9 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.scene.Node;
 import javafx.scene.layout.Pane;
-import javafx.scene.paint.Color;
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonArrayBuilder;
@@ -29,8 +27,6 @@ import javax.json.JsonWriter;
 import javax.json.JsonWriterFactory;
 import javax.json.stream.JsonGenerator;
 import jcd.Connector;
-import jcd.Connector.Anchor;
-import jcd.Connector.Head;
 import jcd.Diagram;
 import jcd.Method;
 import jcd.Variable;
@@ -66,7 +62,8 @@ public class FileManager implements AppFileComponent {
     public static final String JSON_PACKAGE_NAME = "package_name";
     public static final String JSON_VARIABLE_DATA = "variable_data";
     public static final String JSON_METHOD_DATA = "method_data";
-    public static final String JSON_INHERITANCE_DATA = "inheritance_data";
+    public static final String JSON_EXTENSION_DATA = "extension_data";
+    public static final String JSON_IMPLEMENTATION_DATA = "implementaion_data";
     public static final String JSON_AGGREGATION_DATA = "aggregation_data";
     public static final String JSON_RELATIONSHIP_DATA = "relationship_data";
     public static final String JSON_CONNECTOR_DATA = "connector_data";
@@ -164,7 +161,8 @@ public class FileManager implements AppFileComponent {
                 .add(JSON_IS_ABRIGED, diagram.isAbriged()? 1 : 0)
                 .add(JSON_VARIABLE_DATA, buildVariableJsonArray(diagram.getVariableData()))
 		.add(JSON_METHOD_DATA, buildMethodJsonArray(diagram.getMethodData()))
-                .add(JSON_INHERITANCE_DATA, buildDataString(diagram.getInheritanceData()))
+                .add(JSON_EXTENSION_DATA, buildDataString(diagram.getExtensionData()))
+                .add(JSON_IMPLEMENTATION_DATA, buildDataString(diagram.getImplementationData()))
                 .add(JSON_AGGREGATION_DATA, buildDataString(diagram.getAggregationData()))
                 .add(JSON_RELATIONSHIP_DATA, buildDataString(diagram.getRelationshipData()))
                 .add(JSON_CONNECTOR_DATA, buildDataString(diagram.getConnectorData()))
@@ -314,7 +312,8 @@ public class FileManager implements AppFileComponent {
                 jsonObject.getInt(JSON_IS_ABRIGED) == 1,
                 buildVariableList(jsonObject.getJsonArray(JSON_VARIABLE_DATA)),
                 buildMethodList(jsonObject.getJsonArray(JSON_METHOD_DATA)),
-                buildDataArray(jsonObject.getString(JSON_INHERITANCE_DATA)),
+                buildDataArray(jsonObject.getString(JSON_EXTENSION_DATA)),
+                buildDataArray(jsonObject.getString(JSON_IMPLEMENTATION_DATA)),
                 buildDataArray(jsonObject.getString(JSON_AGGREGATION_DATA)),
                 buildDataArray(jsonObject.getString(JSON_RELATIONSHIP_DATA)),
                 buildDataArray(jsonObject.getString(JSON_CONNECTOR_DATA))

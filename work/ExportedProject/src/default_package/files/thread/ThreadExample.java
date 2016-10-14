@@ -1,21 +1,21 @@
 package default_package.files.thread;
 
 import default_package.Application;
+import default_package.Bogus;
 import default_package.ApplicationLayer;
-import default_package.Bingo;
 import default_package.Stage;
 import default_package.BorderPane;
 import default_package.Thread;
 
-public class ThreadExample extends Application implements ApplicationLayer implements Bingo {
+public class ThreadExample extends Application implements ApplicationLayer {
 
-	private boolean work;
+	public String START_TEXT;
+	public String PAUSE_TEXT;
 	private Stage window;
 	private double startTime;
-	public String START_TEXT;
-	protected int slotRemaining;
-	public String PAUSE_TEXT;
 	private double endTime;
+	protected int slotRemaining;
+	private boolean work;
 	private BorderPane appPane;
 
 	public  ThreadExample(double startTime, double endTime, boolean work) {

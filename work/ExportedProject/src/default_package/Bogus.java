@@ -1,7 +1,7 @@
 package default_package;
 
 
-public interface Bingo {
+public class Bogus {
 
 
 }

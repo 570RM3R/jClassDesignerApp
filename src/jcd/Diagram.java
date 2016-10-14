@@ -35,14 +35,15 @@ public class Diagram extends Parent{
     Text headingText;
     ObservableList<Variable> variableData;
     ObservableList<Method> methodData;
-    ArrayList<Integer> inheritanceData;
+    ArrayList<Integer> extensionData;
+    ArrayList<Integer> implementationData;
     ArrayList<Integer> aggregationData;
     ArrayList<Integer> relationshipData;
     ArrayList<Integer> connectorData;
     
     public Diagram(int diagramId, double x, double y, String nameString, String packageName, boolean isGeneric, boolean isInterface,
-            boolean isAbstract, boolean isAbriged, ObservableList<Variable> variableData, ObservableList<Method> methodData,
-            ArrayList<Integer> inheritanceData, ArrayList<Integer> aggregationData, ArrayList<Integer> relationshipData, ArrayList<Integer> connectorData) {
+            boolean isAbstract, boolean isAbriged, ObservableList<Variable> variableData, ObservableList<Method> methodData, ArrayList<Integer> extensionData,
+            ArrayList<Integer> implementationData, ArrayList<Integer> aggregationData, ArrayList<Integer> relationshipData, ArrayList<Integer> connectorData) {
         this.diagramId = diagramId == -1 ? Diagram.idCounter : diagramId;
         nameSection = new Rectangle(125, 30);
         nameSection.setX(x - 66.5);
@@ -68,7 +69,8 @@ public class Diagram extends Parent{
         this.variableData = variableData;
         this.methodData = methodData;
         getChildren().addAll(nameSection, headingText, nameText, variableSection, variableText, methodSection, methodText);
-        this.inheritanceData = inheritanceData;
+        this.extensionData = extensionData;
+        this.implementationData = implementationData;
         this.aggregationData = aggregationData;
         this.relationshipData = relationshipData;
         this.connectorData = connectorData;
@@ -111,7 +113,8 @@ public class Diagram extends Parent{
         variableData = diagram.getClonedVariableData();
         methodData = diagram.getClonedMethodData();
         getChildren().addAll(nameSection, headingText, nameText, variableSection, variableText, methodSection, methodText);
-        inheritanceData = (ArrayList<Integer>)diagram.getInheritanceData().clone();
+        extensionData = (ArrayList<Integer>)diagram.getExtensionData().clone();
+        implementationData = (ArrayList<Integer>)diagram.getImplementationData().clone();
         aggregationData = (ArrayList<Integer>)diagram.getAggregationData().clone();
         relationshipData = (ArrayList<Integer>)diagram.getRelationshipData().clone();
         connectorData = (ArrayList<Integer>)diagram.getConnectorData().clone();
@@ -240,8 +243,12 @@ public class Diagram extends Parent{
         return clonedMethodData;
     }
     
-    public ArrayList<Integer> getInheritanceData(){
-        return inheritanceData;
+    public ArrayList<Integer> getExtensionData(){
+        return extensionData;
+    }
+    
+    public ArrayList<Integer> getImplementationData(){
+        return implementationData;
     }
     
     public ArrayList<Integer> getAggregationData(){
@@ -323,20 +330,38 @@ public class Diagram extends Parent{
         methodText.setY(methodSection.getY() + 6);
     }
     
-    public boolean addInheritanceData(int id) {
-        if(!inheritanceData.contains(id)) {
-            return inheritanceData.add(id);
+    public boolean addExtensionData(int id) {
+        if(!extensionData.contains(id)) {
+            return extensionData.add(id);
         }
         return false;
     }
     
-    public void removeInheritanceData(int id) {
-        for(int i = 0; i< inheritanceData.size(); i++) {
-            if(inheritanceData.get(i) == id) {
-                inheritanceData.remove(i);
-                break;
+    public boolean addImplementationData(int id) {
+        if(!implementationData.contains(id)) {
+            return implementationData.add(id);
+        }
+        return false;
+    }
+    
+    public boolean removeExtensionData(int id) {
+        for(int i = 0; i< extensionData.size(); i++) {
+            if(extensionData.get(i) == id) {
+                extensionData.remove(i);
+                return true;
             }
         }
+        return false;
+    }
+    
+    public boolean removeImplementationData(int id) {
+        for(int i = 0; i< implementationData.size(); i++) {
+            if(implementationData.get(i) == id) {
+                implementationData.remove(i);
+                return true;
+            }
+        }
+        return false;
     }
     
     public boolean addAggregationData(int id) {
@@ -528,7 +553,7 @@ public class Diagram extends Parent{
         }
         
         diagramString += "\nPoints:\n";
-        if(inheritanceData.isEmpty() && aggregationData.isEmpty() && relationshipData.isEmpty()) {
+        if(extensionData.isEmpty() && implementationData.isEmpty() && aggregationData.isEmpty() && relationshipData.isEmpty()) {
             diagramString += "No connectors\n";
         }
         else {
