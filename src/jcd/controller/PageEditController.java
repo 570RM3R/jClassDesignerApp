@@ -213,6 +213,8 @@ public class PageEditController {
     public void handleSaveAsPhotoRequest() {
         Workspace workspace = (Workspace) app.getWorkspaceComponent();
         PropertiesManager props = PropertiesManager.getPropertiesManager();
+        double zoomIndex = workspace.getZoomSlider().getValue();
+        workspace.getZoomSlider().setValue(2);
         workspace.reloadWorkspace(index);
         Pane pane = workspace.getLeftPane();
         if (index != -1 && pane.getChildren().get(index) instanceof Diagram) {
@@ -231,6 +233,7 @@ public class PageEditController {
             diagram = (Diagram)pane.getChildren().get(index);
             diagram.setStroke(Color.BLUE);
         }
+        workspace.getZoomSlider().setValue(zoomIndex);
         workspace.reloadWorkspace(index);
     }
 

@@ -463,6 +463,10 @@ public class Workspace extends AppWorkspaceComponent {
         return nameTextField;
     }
     
+    public Slider getZoomSlider() {
+        return zoomSlider;
+    }
+    
     public TextField getPackageTextField() {
         return packageTextField;
     }
