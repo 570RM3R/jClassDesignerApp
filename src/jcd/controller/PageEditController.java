@@ -510,27 +510,34 @@ public class PageEditController {
         if (index != -1 && pane.getChildren().get(index) instanceof Diagram){
             diagram = (Diagram)pane.getChildren().get(index);
             Diagram parent = findDiagram(parentName);
-            // Parent doesn't exist in the workspace, and it's not a premitive class
-            if(parent == null && !isPrimitive(parentName)) {
-                // Delete previous parent class links
+            // Parent doesn't exist in the workspace
+            if(parent == null) {
+                // Delete previous extension data and connector
                 if(!diagram.getExtensionData().isEmpty()) {
+                    // For Java only, where multiinheritence isn't allowed
                     removeDiagramDependencies(findDiagram(diagram.getExtensionData().get(0)));
                     diagram.getExtensionData().clear();
                 }
                 parent = finishAddingDiagram(diagram.getNameSection().getX() + 62.5, diagram.getNameSection().getY() - 180, parentName, diagram.getPackageName(), false);
+                diagram.addExtensionData(parent.getDiagramId());
                 finishAddingConnector(diagram, parent, 11);
             }
             // Parent exists in the workspace, and it's not the class itself
             else if(parent != null && diagram.getDiagramId() != parent.getDiagramId()) {
-                if(!parent.isInterface() && diagram.addExtensionData(parent.getDiagramId())) {
-                    // Delete previous parent class links
+                // Parent is class and it doesn't exist in the extension data of the diagram
+                if(!parent.isInterface() && !diagram.getExtensionData().contains(parent.getDiagramId())) {
+                    // Delete previous extension data and connector
                     if(!diagram.getExtensionData().isEmpty()) {
+                        // For Java only, where multiinheritence isn't allowed
                         removeDiagramDependencies(findDiagram(diagram.getExtensionData().get(0)));
                         diagram.getExtensionData().clear();
                     }
+                    diagram.addExtensionData(parent.getDiagramId());
                     finishAddingConnector(diagram, parent, 11);
                 }
-                else if(parent.isInterface() && diagram.addImplementationData(parent.getDiagramId())) {
+                // Parent is an interface and it doesn't exist in the implementation data of the diagram
+                else if(parent.isInterface() && !diagram.getImplementationData().contains(parent.getDiagramId())) {
+                    diagram.addImplementationData(parent.getDiagramId());
                     finishAddingConnector(diagram, parent, 01);
                 }
             }

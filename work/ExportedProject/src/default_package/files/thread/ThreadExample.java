@@ -1,13 +1,13 @@
 package default_package.files.thread;
 
-import default_package.Application;
-import default_package.Bogus;
+import default_package.Box;
 import default_package.ApplicationLayer;
+import default_package.NewInterface;
 import default_package.Stage;
 import default_package.BorderPane;
 import default_package.Thread;
 
-public class ThreadExample extends Application implements ApplicationLayer {
+public class ThreadExample extends Box implements ApplicationLayer, NewInterface {
 
 	public String START_TEXT;
 	public String PAUSE_TEXT;
