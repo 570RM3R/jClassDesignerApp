@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package jcd.gui;
 
 import java.io.IOException;
@@ -26,6 +21,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Screen;
+import javafx.stage.Stage;
 import javafx.util.Callback;
 import jcd.Diagram;
 import jcd.Method;
@@ -152,7 +148,10 @@ public class Workspace extends AppWorkspaceComponent {
 
 	// KEEP THE GUI FOR LATER
 	gui = app.getGUI();
-        
+        Stage primaryStage = gui.getWindow();
+        SplashScreen splashStage = new SplashScreen();
+        splashStage.start(primaryStage, "./images/SplashScreen.png");
+
         // THIS WILL PROVIDE US WITH OUR CUSTOM UI SETTINGS AND TEXT
 	PropertiesManager propsSingleton = PropertiesManager.getPropertiesManager();
         

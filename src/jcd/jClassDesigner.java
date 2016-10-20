@@ -1,20 +1,18 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package jcd;
 
 import java.util.Locale;
 import static javafx.application.Application.launch;
+import javafx.stage.Stage;
 import jcd.data.DataManager;
 import jcd.file.FileManager;
+import jcd.gui.SplashScreen;
 import jcd.gui.Workspace;
 import paf.AppTemplate;
 import paf.components.AppComponentsBuilder;
 import paf.components.AppDataComponent;
 import paf.components.AppFileComponent;
 import paf.components.AppWorkspaceComponent;
+import paf.ui.AppGUI;
 
 /**
  * This class serves as the application class for our Web Page Maker program. 

@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package jcd.controller;
 
 import java.io.File;
@@ -488,8 +483,8 @@ public class PageEditController {
         Stage helpStage = new Stage();
         FlowPane helpPane = new FlowPane();
         helpPane.setPadding(new Insets(100, 100, 100, 90));
-        helpPane.getChildren().add(new Text("Put your cursor on a button, and you'll see help note.\n\n\n\t  For more help: abu.saeid@outlook.com"));
-        Scene helpScene = new Scene(helpPane, 500, 300, Color.WHITE);
+        helpPane.getChildren().add(new Text("Mouse over a button for cues.\n\n\n\t  For more help, visit https://the-jclass-designer.firebaseapp.com/"));
+        Scene helpScene = new Scene(helpPane, 700, 300, Color.WHITE);
         helpStage.setScene(helpScene);
         helpStage.show();
     }
@@ -498,8 +493,8 @@ public class PageEditController {
         Stage infoStage = new Stage();
         FlowPane infoPane = new FlowPane();
         infoPane.setPadding(new Insets(100, 100, 100, 90));
-        infoPane.getChildren().add(new Text("jClass Designer (alpha)\n\n Developed by Saeid\n\n Dedicated to Mom ❤"));
-        Scene infoScene = new Scene(infoPane, 320, 300, Color.WHITE);
+        infoPane.getChildren().add(new Text("jClass Designer (alpha)\n\n Developed by Richard McKenna and Saeid Abu\n\n Dedicated to our Moms ❤"));
+        Scene infoScene = new Scene(infoPane, 620, 300, Color.WHITE);
         infoStage.setScene(infoScene);
         infoStage.show();
     }
