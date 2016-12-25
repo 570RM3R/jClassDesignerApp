@@ -1,7 +1,7 @@
 package default_package;
 
 
-public class Box {
+public class Application {
 
 
 }

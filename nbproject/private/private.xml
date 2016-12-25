@@ -3,17 +3,27 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/Volumes/Files/Documents/Java/jClassDesignerApp/src/jcd/controller/PageEditController.java</file>
-            <file>file:/Volumes/Files/Documents/Java/jClassDesignerApp/src/jcd/Diagram.java</file>
-            <file>file:/Volumes/Files/Documents/Java/jClassDesignerApp/src/jcd/Connector.java</file>
+            <file>file:/Volumes/Files/Documents/Java/jClassDesignerApp/src/jcd/gui/Workspace.java</file>
+            <file>file:/Volumes/Files/Documents/Java/jClassDesignerApp/src/jcd/Variable.java</file>
+            <file>file:/Volumes/Files/Documents/Java/jClassDesignerApp/src/jcd/gui/SplashScreen.java</file>
             <file>file:/Volumes/Files/Documents/Java/jClassDesignerApp/src/jcd/Grid.java</file>
+            <file>file:/Volumes/Files/Documents/Java/jClassDesignerApp/src/jcd/data/DataManager.java</file>
+            <file>file:/Volumes/Files/Documents/Java/jClassDesignerApp/src/test/SplashScreenTester.java</file>
+            <file>file:/Volumes/Files/Documents/Java/jClassDesignerApp/src/jcd/MethodCellCheckBox.java</file>
+            <file>file:/Volumes/Files/Documents/Java/jClassDesignerApp/src/jcd/Method.java</file>
             <file>file:/Volumes/Files/Documents/Java/jClassDesignerApp/src/jcd/VariableCellComboBox.java</file>
-            <file>file:/Volumes/Files/Documents/Java/jClassDesignerApp/src/jcd/VariableCellText.java</file>
-            <file>file:/Volumes/Files/Documents/Java/jClassDesignerApp/src/jcd/jClassDesigner.java</file>
-            <file>file:/Volumes/Files/Documents/Java/jClassDesignerApp/src/jcd/MethodCellText.java</file>
-            <file>file:/Volumes/Files/Documents/Java/jClassDesignerApp/src/jcd/MethodCellComboBox.java</file>
             <file>file:/Volumes/Files/Documents/Java/jClassDesignerApp/src/jcd/ZoomingPane.java</file>
+            <file>file:/Volumes/Files/Documents/Java/jClassDesignerApp/src/jcd/css/jcd_style.css</file>
+            <file>file:/Volumes/Files/Documents/Java/jClassDesignerApp/src/jcd/Diagram.java</file>
+            <file>file:/Volumes/Files/Documents/Java/jClassDesignerApp/src/jcd/jClassDesigner.java</file>
+            <file>file:/Volumes/Files/Documents/Java/jClassDesignerApp/src/jcd/VariableCellText.java</file>
+            <file>file:/Volumes/Files/Documents/Java/jClassDesignerApp/src/jcd/PropertyType.java</file>
+            <file>file:/Volumes/Files/Documents/Java/jClassDesignerApp/src/jcd/MethodCellComboBox.java</file>
+            <file>file:/Volumes/Files/Documents/Java/jClassDesignerApp/src/jcd/MethodCellText.java</file>
+            <file>file:/Volumes/Files/Documents/Java/jClassDesignerApp/src/jcd/controller/PageEditController.java</file>
+            <file>file:/Volumes/Files/Documents/Java/jClassDesignerApp/src/jcd/Connector.java</file>
             <file>file:/Volumes/Files/Documents/Java/jClassDesignerApp/src/jcd/file/FileManager.java</file>
+            <file>file:/Volumes/Files/Documents/Java/jClassDesignerApp/src/jcd/VariableCellCheckBox.java</file>
         </group>
     </open-files>
 </project-private>
